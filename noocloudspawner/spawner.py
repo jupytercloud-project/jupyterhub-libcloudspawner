@@ -23,118 +23,156 @@ from keystoneauth1 import session
 from novaclient import client
 from keystoneclient import client as ksclient
 
+from libcloud.compute.types import Provider
+from libcloud.compute.providers import get_driver
+from libcloud.compute.deployment import SSHKeyDeployment
+
+
+import random, string
+
 import requests
 import time
 from time import sleep
 
 class NooCloudSpawner(Spawner):
-    """A Spawner that instanciate notebook inside NooCloud."""
+    """A Spawner that create notebook inside NooCloud."""
 
-    nooapi_url = Unicode(
+    noocloud_url = Unicode(
+        "https://noocloud.univ-brest.fr/keystone/v3/auth/tokens",
         config=True,
         help=''
     )
-    nooapi_user = Unicode(
+    noocloud_user = Unicode(
         config=True,
         help=''
     )
-    nooapi_userpassword = Unicode(
+    noocloud_userpassword = Unicode(
         config=True,
         help=''
     )
-    nooapi_project = Unicode(
+    noocloud_project = Unicode(
         config=True,
         help=''
     )
-    nooapi_profil = Unicode(
+    machine_size = Unicode(
         config=True,
         help=''
     )
-    machineid = Integer(
-        0,
+    noocloud_region = Unicode(
+        'RegionOne',
+        config=True,
+        help=''
+    )
+    machine_image = Unicode(
+        config=True,
+        help=''
+    )
+    machine_net = Unicode(
+        config=True,
+        help=''
+    )
+    machineid = Unicode(
+        "",
         help=''
     )
 
-    def readConf(self):
-        conf={}
-        conf['confnooapiurl'] = self.nooapi_url
-        conf['confusername'] = self.nooapi_user
-        conf['confpassword'] = self.nooapi_userpassword
-        return conf
-
-    def readCloudInfo(self):
-        cloudinfo={}
-        cloudinfo['cloudname'] = "NooCloud"
-        cloudinfo['domainname'] = "default"
-        cloudinfo['authurl'] = "https://noocloud.univ-brest.fr/keystone/v3"
-        cloudinfo['dashboard'] = "https://noocloud.univ-brest.fr/horizon/"
-        cloudinfo['regionname'] = "RegionOne"
-        return cloudinfo
-    
-    def getToken(self):
+    def getLibCloudDriver(self):
         """
-            Authenticate on Keystone, retrieve an unscopped token 
+            Retrieve LibCloudDriver 
         """
-        conf = self.readConf()
-        cloudinfo = self.readCloudInfo()
-    
-        loader = loading.get_plugin_loader('password')
-        auth = loader.load_from_options(auth_url=cloudinfo['authurl'],
-                                        username=conf['confusername'],
-                                        password=conf['confpassword'],
-                                        user_domain_name=cloudinfo['domainname'],)
-        sess = session.Session(auth=auth)
-        try:
-            token = sess.get_token()
-        except:
-            token = None
-        self.log.debug(token)
-        return token
+        cls = get_driver(Provider.OPENSTACK)
+        driver = cls(self.noocloud_user, self.noocloud_userpassword,
+                     ex_force_auth_version='3.x_password',
+                     ex_force_auth_url=self.noocloud_url,
+                     ex_force_service_region=self.noocloud_region,
+                     ex_tenant_name=self.noocloud_project)
+        return driver
 
     def getMachine(self, machineid):
         """
             Retrieve machine informations
         """
-        conf = self.readConf()
-        token = self.getToken()
-        headers = {'X-Auth-Token': token}
-
-        url = conf['confnooapiurl']+"/machines/"+str(machineid)
-
-        try:
-            machineinfos = requests.get(url, headers=headers).json()
-            self.log.debug(machineinfos)
-            return machineinfos
-        except:
-            return None
+        self.log.debug("Getting Machine")
+        driver = self.getLibCloudDriver()
+        m = driver.ex_get_node_details(machineid)
+        self.log.debug(m)
+        return m
     
     def getMachineStatus(self):
         self.log.debug("Getting Machine status")
         machineinfos = self.getMachine(self.machineid)
         self.log.debug(machineinfos)
         if machineinfos:
-            if machineinfos['status'] == 'ACTIVE':
+            if machineinfos.state == 'running':
+                self.log.debug("Machine runnig")
                 return None
+        self.log.debug("Machine NOT running")
         return 1
 
     def createMachine(self):
         """
             Create a machine, return machine informations
         """
-        conf = self.readConf()
-        token = self.getToken()
-        headers = {'X-Auth-Token': token}
+        self.log.debug("Spawning machine")
+        driver = self.getLibCloudDriver()
 
-        projecturl = conf['confnooapiurl']+"/projects/"+self.nooapi_project+"/"
-        profilurl = conf['confnooapiurl']+"/profils/"+self.nooapi_profil+"/"
-        payload = {'name': "jupytermachine", 'project': projecturl, 'profile': profilurl}
+        userdata = """#!/bin/bash
+cat <<EOF > /etc/systemd/system/jupyterhub-singleuser.service
+[Unit]
+Description=JupyterHub-singleuser instance
+ 
+[Service]
+User={user}
+Environment=JPY_API_TOKEN={apitoken}
+ExecStart=/usr/local/bin/jupyterhub-singleuser --port=8000 --ip=0.0.0.0 --user={user} --cookie-name={cookiename} --base-url={baseurl} --hub-prefix={hubprefix} --hub-api-url={apiurl}  {notebookargs} \$@
+[Install]
+WantedBy=multi-user.target
+EOF
 
-        url = conf['confnooapiurl']+"/machines/"
-        try:
-            r = requests.post(url, data=payload, headers=headers).json()
-        except:
-            return None
-        return r
+systemctl daemon-reload
+systemctl restart jupyterhub-singleuser.service
+systemctl enable jupyterhub-singleuser.service
+""".format(
+                   apitoken=self.get_env()["JPY_API_TOKEN"],
+                   user=self.user.name,
+                   cookiename=self.user.server.cookie_name,
+                   baseurl=self.user.server.base_url,
+                   hubprefix=self.hub.server.base_url,
+                   apiurl=self.hub.api_url,
+                   notebookargs="",
+            )
+
+        print(userdata)
+
+        images = driver.list_images()
+        sizes = driver.list_sizes()
+        nets = driver.ex_list_networks()
+
+        for i in images:
+            if i.name == self.machine_image:
+                self.log.debug("Image found %s" % i.name)
+                machineimage = i
+        for s in sizes:
+            if s.name == self.machine_size:
+                self.log.debug("Size found %s" % s.name)
+                machinesize = s
+        for n in nets:
+            self.log.debug(n.name)
+            if n.name == self.machine_net:
+                self.log.debug("Network found %s" % n.name)
+                machinenet = n
+
+        randomstring = ''.join(random.choice(string.ascii_uppercase) for _ in range(6))
+
+        machinename = ("jpy-%s-%s" % (self.user.name, randomstring))
+        node = driver.create_node(name=machinename,
+                                  image=machineimage,
+                                  size=machinesize,
+                                  networks=[machinenet],
+                                  ex_keyname="tristanlt",
+                                  ex_userdata=userdata)
+        self.log.debug(node)
+        return node
 
     def load_state(self, state):
         """load machineid from state"""
@@ -151,7 +189,7 @@ class NooCloudSpawner(Spawner):
     def clear_state(self):
         """clear pid state"""
         super(NooCloudSpawner, self).clear_state()
-        self.machineid = 0
+        self.machineid = u""
 
     @gen.coroutine
     def start(self):
@@ -164,14 +202,15 @@ class NooCloudSpawner(Spawner):
         timeout = 30  # seconds
         
         cont = True
-        
+         
         while (time.time() < timeout_start + timeout) and cont:
-            m = self.getMachine(machineid=machine["id"])
-            if m['status'] == "ACTIVE":
+            m = self.getMachine(machineid=machine.id)
+            if m.state == "running":
+                self.log.debug("Machine ready, updating Jupyter db")
                 # Nice ! our instance is up and ready !
                 self.user.server.port = 8000
-                self.user.server.ip = m['ipaddr']
-                self.machineid = m['id']
+                self.user.server.ip = m.private_ips[0]
+                self.machineid = m.id
                 cont = False
             sleep(1)
         self.db.commit()
@@ -199,37 +238,11 @@ class NooCloudSpawner(Spawner):
         return True # process exists
 
     @gen.coroutine
-    def stop(self, now=False):
-        """stop the subprocess
-
-        if `now`, skip waiting for clean shutdown
-        """
+    def stop(self):
+        self.log.debug("DELETE Cloud instance %s " % self.machineid)
+        driver = self.getLibCloudDriver()
+        if not self.getMachineStatus():
+            self.log.debug("Cloud instance running, send delete for %s " % self.machineid)
+            m = self.getMachine(self.machineid)
+            driver.destroy_node(m)
         return
-        #if not now:
-        #    status = yield self.poll()
-        #    if status is not None:
-        #        return
-        #    self.log.debug("Interrupting %i", self.pid)
-        #    yield self._signal(signal.SIGINT)
-        #    yield self.wait_for_death(self.INTERRUPT_TIMEOUT)
-
-        ## clean shutdown failed, use TERM
-        #status = yield self.poll()
-        #if status is not None:
-        #    return
-        #self.log.debug("Terminating %i", self.pid)
-        #yield self._signal(signal.SIGTERM)
-        #yield self.wait_for_death(self.TERM_TIMEOUT)
-
-        ## TERM failed, use KILL
-        #status = yield self.poll()
-        #if status is not None:
-        #    return
-        #self.log.debug("Killing %i", self.pid)
-        #yield self._signal(signal.SIGKILL)
-        #yield self.wait_for_death(self.KILL_TIMEOUT)
-
-        #status = yield self.poll()
-        #if status is None:
-        #    # it all failed, zombie process
-        #    self.log.warn("Process %i never died", self.pid)
