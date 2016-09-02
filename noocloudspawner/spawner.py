@@ -55,7 +55,14 @@ class NooCloudSpawner(Spawner):
         "",
         help=''
     )
-
+    forceuser = Unicode(
+        "",
+        help='Use this user instead of auth user'
+    )
+    notebookargs = Unicode(
+        "",
+        help='notebookargs'
+    )
     def getLibCloudDriver(self):
         """
             Retrieve LibCloudDriver 
@@ -96,6 +103,11 @@ class NooCloudSpawner(Spawner):
         self.log.debug("Spawning machine")
         driver = self.getLibCloudDriver()
 
+        if self.forceuser:
+            username = self.forceuser
+        else:
+            username = self.user.name
+
         userdata = """#!/bin/bash
 cat <<EOF > /etc/systemd/system/jupyterhub-singleuser.service
 [Unit]
@@ -114,12 +126,12 @@ systemctl restart jupyterhub-singleuser.service
 systemctl enable jupyterhub-singleuser.service
 """.format(
                    apitoken=self.get_env()["JPY_API_TOKEN"],
-                   user=self.user.name,
+                   user=username,
                    cookiename=self.user.server.cookie_name,
                    baseurl=self.user.server.base_url,
                    hubprefix=self.hub.server.base_url,
                    apiurl=self.hub.api_url,
-                   notebookargs="",
+                   notebookargs=self.notebookargs,
             )
 
         print(userdata)
