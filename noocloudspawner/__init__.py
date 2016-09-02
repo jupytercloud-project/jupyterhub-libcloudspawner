@@ -1,1 +1,1 @@
-from .spawner import NooCloudSpawner
+from noocloudspawner.spawner import NooCloudSpawner

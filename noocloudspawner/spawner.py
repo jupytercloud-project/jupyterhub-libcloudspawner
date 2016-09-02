@@ -1,32 +1,12 @@
 """RemoteSpawner implementation"""
-import signal
-import errno
-import pwd
-import os
-import pipes
-from subprocess import Popen, call
-
 from tornado import gen
 
 from jupyterhub.spawner import Spawner
 from traitlets import (
     Instance, Integer, Unicode, List, Bool
 )
-
-from jupyterhub.utils import random_port
-from jupyterhub.spawner import set_user_setuid
-
-from celery.contrib import rdb
-
-from keystoneauth1 import loading
-from keystoneauth1 import session
-from novaclient import client
-from keystoneclient import client as ksclient
-
 from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
-from libcloud.compute.deployment import SSHKeyDeployment
-
 
 import random, string
 
