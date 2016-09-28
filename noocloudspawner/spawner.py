@@ -60,10 +60,12 @@ class NooCloudSpawner(Spawner):
     )
     forceuser = Unicode(
         "",
+        config=True,
         help='Use this user instead of auth user'
     )
     notebookargs = Unicode(
         "",
+        config=True,
         help='notebookargs'
     )
 
@@ -175,7 +177,7 @@ systemctl enable jupyterhub-singleuser.service
                    notebookargs=self.notebookargs,
             )
 
-        print(userdata)
+        self.log.debug(userdata)
 
         images = driver.list_images()
         sizes = driver.list_sizes()
