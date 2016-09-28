@@ -14,6 +14,8 @@ import requests
 import time
 from time import sleep
 
+import shlex
+
 class NooCloudSpawner(Spawner):
     """A Spawner that create notebook inside NooCloud."""
 
@@ -34,7 +36,8 @@ class NooCloudSpawner(Spawner):
         config=True,
         help=''
     )
-    machine_size = Unicode(
+    machine_sizes = List(
+        [],
         config=True,
         help=''
     )
@@ -63,6 +66,38 @@ class NooCloudSpawner(Spawner):
         "",
         help='notebookargs'
     )
+
+    def _options_form_default(self):
+        formhtml=[]
+        formhtml.append("<label for=\"args\"> Virtual machine size </label>")
+        formhtml.append("<select name=\"size\">")
+        for size in self.machine_sizes:
+            option = "<option value=\"%s\"> %s </option>" % (size[1], size[0])
+            formhtml.append(option)
+        formhtml.append("</select>")
+        return(" ".join(formhtml))
+
+    def options_from_form(self, formdata):
+        options = {}
+        options['machinesize'] = ""
+
+        machinesize = formdata.get('size', "")[0]
+        options['machinesize'] = machinesize
+        return options
+
+    def get_args(self):
+        """Return arguments to pass to the notebook server"""
+        argv = super().get_args()
+        if self.user_options.get('argv'):
+            argv.extend(self.user_options['argv'])
+        return argv
+
+    def get_env(self):
+        env = super().get_env()
+        if self.user_options.get('env'):
+            env.update(self.user_options['env'])
+        return env
+
     def getLibCloudDriver(self):
         """
             Retrieve LibCloudDriver 
@@ -91,9 +126,15 @@ class NooCloudSpawner(Spawner):
         self.log.debug(machineinfos)
         if machineinfos:
             if machineinfos.state == 'running':
-                self.log.debug("Machine runnig")
+                # Machine ruunin, trying http
+                self.log.debug("Machine running. Trying HTTP request on 8000")
+                try:
+                    httptest = requests.head("http://%s:8000" % machineinfos.private_ips[0], max_retries=1)
+                except:
+                    httptest = None
+                self.log.debug(httptest)
                 return None
-        self.log.debug("Machine NOT running")
+        self.log.debug("Machine NOT ready")
         return 1
 
     def createMachine(self):
@@ -145,7 +186,7 @@ systemctl enable jupyterhub-singleuser.service
                 self.log.debug("Image found %s" % i.name)
                 machineimage = i
         for s in sizes:
-            if s.name == self.machine_size:
+            if s.name == self.user_options['machinesize']:
                 self.log.debug("Size found %s" % s.name)
                 machinesize = s
         for n in nets:
@@ -187,14 +228,10 @@ systemctl enable jupyterhub-singleuser.service
     def start(self):
         """Start the process"""
         self.log.debug("DEBUG start nooSpwaner")
-        
         machine = self.createMachine()
-        
         timeout_start = time.time()
         timeout = 30  # seconds
-        
         cont = True
-         
         while (time.time() < timeout_start + timeout) and cont:
             m = self.getMachine(machineid=machine.id)
             if m.state == "running":
@@ -214,20 +251,6 @@ systemctl enable jupyterhub-singleuser.service
             return self.getMachineStatus()
         else:
             return 1
-
-    @gen.coroutine
-    def _signal(self, sig):
-        """simple implementation of signal
-
-        we can use it when we are using setuid (we are root)"""
-        #try:
-        #    os.kill(self.pid, sig)
-        #except OSError as e:
-        #    if e.errno == errno.ESRCH:
-        #        return False # process is gone
-        #    else:
-        #        raise
-        return True # process exists
 
     @gen.coroutine
     def stop(self):
