@@ -1,2 +1,4 @@
 /jupyterhub_cookie_secret
 /jupyterhub.sqlite
+*.pyc
+libcloudspawner/__pycache__

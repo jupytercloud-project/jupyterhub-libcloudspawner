@@ -1,1 +1,0 @@
-from noocloudspawner.spawner import NooCloudSpawner

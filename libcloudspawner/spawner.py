@@ -1,4 +1,3 @@
-"""RemoteSpawner implementation"""
 from tornado import gen
 
 from jupyterhub.spawner import Spawner
@@ -16,23 +15,23 @@ from time import sleep
 
 import shlex
 
-class NooCloudSpawner(Spawner):
+class libcloudSpawner(Spawner):
     """A Spawner that create notebook inside NooCloud."""
 
-    noocloud_url = Unicode(
+    cloud_url = Unicode(
         "https://noocloud.univ-brest.fr/keystone/v3/auth/tokens",
         config=True,
         help=''
     )
-    noocloud_user = Unicode(
+    cloud_user = Unicode(
         config=True,
         help=''
     )
-    noocloud_userpassword = Unicode(
+    cloud_userpassword = Unicode(
         config=True,
         help=''
     )
-    noocloud_project = Unicode(
+    cloud_project = Unicode(
         config=True,
         help=''
     )
@@ -41,7 +40,7 @@ class NooCloudSpawner(Spawner):
         config=True,
         help=''
     )
-    noocloud_region = Unicode(
+    cloud_region = Unicode(
         'RegionOne',
         config=True,
         help=''
@@ -105,11 +104,11 @@ class NooCloudSpawner(Spawner):
             Retrieve LibCloudDriver 
         """
         cls = get_driver(Provider.OPENSTACK)
-        driver = cls(self.noocloud_user, self.noocloud_userpassword,
+        driver = cls(self.cloud_user, self.cloud_userpassword,
                      ex_force_auth_version='3.x_password',
-                     ex_force_auth_url=self.noocloud_url,
-                     ex_force_service_region=self.noocloud_region,
-                     ex_tenant_name=self.noocloud_project)
+                     ex_force_auth_url=self.cloud_url,
+                     ex_force_service_region=self.cloud_region,
+                     ex_tenant_name=self.cloud_project)
         return driver
 
     def getMachine(self, machineid):
@@ -128,7 +127,7 @@ class NooCloudSpawner(Spawner):
         self.log.debug(machineinfos)
         if machineinfos:
             if machineinfos.state == 'running':
-                # Machine ruunin, trying http
+                # Machine running, trying http
                 self.log.debug("Machine running. Trying HTTP request on 8000")
                 try:
                     httptest = requests.head("http://%s:8000" % machineinfos.private_ips[0], max_retries=1)
@@ -211,25 +210,25 @@ systemctl enable jupyterhub-singleuser.service
 
     def load_state(self, state):
         """load machineid from state"""
-        super(NooCloudSpawner, self).load_state(state)
+        super(libcloudSpawner, self).load_state(state)
         pass
     
     def get_state(self):
         """add machineid to state"""
-        state = super(NooCloudSpawner, self).get_state()
+        state = super(libcloudSpawner, self).get_state()
         if self.machineid:
             state['machineid'] = self.machineid
         return state
 
     def clear_state(self):
         """clear pid state"""
-        super(NooCloudSpawner, self).clear_state()
+        super(libcloudSpawner, self).clear_state()
         self.machineid = u""
 
     @gen.coroutine
     def start(self):
         """Start the process"""
-        self.log.debug("DEBUG start nooSpwaner")
+        self.log.debug("DEBUG start libcloudSpawner")
         machine = self.createMachine()
         timeout_start = time.time()
         timeout = 30  # seconds

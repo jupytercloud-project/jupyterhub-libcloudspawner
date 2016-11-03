@@ -17,14 +17,14 @@ with open(pjoin(here, 'version.py')) as f:
     exec(f.read(), {}, version_ns)
 
 setup_args = dict(
-    name                = 'noocloudspawner',
-    packages            = ['noocloudspawner'],
+    name                = 'jupyter-libcloudspawner',
+    packages            = ['jupyter-libcloudspawner'],
     version             = version_ns['__version__'],
-    description         = """NooCloudSpawner: A Spawner for Jupyterhub which create notebook inside nooCloud """,
+    description         = """jupyter-libcloudspawner: A Spawner for Jupyterhub which create notebook inside OpenStack """,
     long_description    = "",
     author              = "Tristan Le Toullec",
     author_email        = "tristan.letoullec@cnrs.fr",
-    url                 = "http://jupyter.org",
+    url                 = "https://github.com/tristanlt/jupyter-libcloudspawner",
     license             = "BSD",
     platforms           = "Linux, Mac OS X",
     keywords            = ['Interactive', 'Interpreter', 'Shell', 'Web'],
