@@ -210,19 +210,19 @@ systemctl enable jupyterhub-singleuser.service
 
     def load_state(self, state):
         """load machineid from state"""
-        super(libcloudSpawner, self).load_state(state)
+        super(LibcloudSpawner, self).load_state(state)
         pass
-    
+
     def get_state(self):
         """add machineid to state"""
-        state = super(libcloudSpawner, self).get_state()
+        state = super(LibcloudSpawner, self).get_state()
         if self.machineid:
             state['machineid'] = self.machineid
         return state
 
     def clear_state(self):
         """clear pid state"""
-        super(libcloudSpawner, self).clear_state()
+        super(LibcloudSpawner, self).clear_state()
         self.machineid = u""
 
     @gen.coroutine
