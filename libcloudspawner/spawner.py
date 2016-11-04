@@ -15,7 +15,7 @@ from time import sleep
 
 import shlex
 
-class libcloudSpawner(Spawner):
+class LibcloudSpawner(Spawner):
     """A Spawner that create notebook inside NooCloud."""
 
     cloud_url = Unicode(

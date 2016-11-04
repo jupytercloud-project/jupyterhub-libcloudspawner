@@ -1,1 +1,1 @@
-from libcloudspawner.spawner import libcloudSpawner
+from libcloudspawner.spawner import LibcloudSpawner

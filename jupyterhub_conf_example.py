@@ -15,11 +15,11 @@ c.Spawner.http_timeout = 60
 c.Spawner.debug = False
 c.Spawner.notebook_dir = '~/'
 c.Spawner.args = ['']
-c.libcloudSpawner.cloud_url = "https://KEYSTONE_API/v3/auth/tokens"
-c.libcloudSpawner.cloud_user = "jupyter"
-c.libcloudSpawner.cloud_userpassword = "secret"
-c.libcloudSpawner.cloud_project = "jupyterproject"
-c.libcloudSpawner.machine_sizes = [("1vcpu 2Go RAM", "m1.small"), ("4vcpu 8Go RAM", "m1.large")]
-c.libcloudSpawner.machine_image = "notebook-machine-template"
-c.libcloudSpawner.machine_net = "ext-net"
-c.libcloudSpawner.notebookargs = "--notebook-dir=~"
+c.LibcloudSpawner.cloud_url = "https://KEYSTONE_API/v3/auth/tokens"
+c.LibcloudSpawner.cloud_user = "jupyter"
+c.LibcloudSpawner.cloud_userpassword = "secret"
+c.LibcloudSpawner.cloud_project = "jupyterproject"
+c.LibcloudSpawner.machine_sizes = [("1vcpu 2Go RAM", "m1.small"), ("4vcpu 8Go RAM", "m1.large")]
+c.LibcloudSpawner.machine_image = "notebook-machine-template"
+c.LibcloudSpawner.machine_net = "ext-net"
+c.LibcloudSpawner.notebookargs = "--notebook-dir=~"
