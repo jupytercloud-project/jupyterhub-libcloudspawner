@@ -239,7 +239,10 @@ systemctl enable jupyterhub-singleuser.service
                 self.log.debug("Machine ready, updating Jupyter db")
                 # Nice ! our instance is up and ready !
                 self.user.server.port = 8000
-                self.user.server.ip = m.private_ips[0]
+                if len(m.private_ips) > 0:
+                    self.user.server.ip = m.private_ips[0]
+                if len(m.public_ips) > 0:
+                    self.user.server.ip = m.public_ips[0]
                 self.machineid = m.id
                 cont = False
             sleep(1)
