@@ -20,6 +20,7 @@ c.LibcloudSpawner.cloud_user = "jupyter"
 c.LibcloudSpawner.cloud_userpassword = "secret"
 c.LibcloudSpawner.cloud_project = "jupyterproject"
 c.LibcloudSpawner.machine_sizes = [("1vcpu 2Go RAM", "m1.small"), ("4vcpu 8Go RAM", "m1.large")]
+c.LibcloudSpawner.machine_images = [("Default image","jpysingleuser-general-applayer")]
 c.LibcloudSpawner.machine_image = "notebook-machine-template"
 c.LibcloudSpawner.machine_net = "ext-net"
 c.LibcloudSpawner.notebookargs = "--notebook-dir=~"

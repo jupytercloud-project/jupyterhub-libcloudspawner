@@ -45,7 +45,8 @@ class LibcloudSpawner(Spawner):
         config=True,
         help=''
     )
-    machine_image = Unicode(
+    machine_images = List(
+        [],
         config=True,
         help=''
     )
@@ -70,6 +71,12 @@ class LibcloudSpawner(Spawner):
 
     def _options_form_default(self):
         formhtml=[]
+        formhtml.append("<label for=\"args\"> Virtual machine image </label>")
+        formhtml.append("<select name=\"image\">")
+        for size in self.machine_images:
+            option = "<option value=\"%s\"> %s </option>" % (size[1], size[0])
+            formhtml.append(option)
+        formhtml.append("</select>")
         formhtml.append("<label for=\"args\"> Virtual machine size </label>")
         formhtml.append("<select name=\"size\">")
         for size in self.machine_sizes:
@@ -81,8 +88,11 @@ class LibcloudSpawner(Spawner):
     def options_from_form(self, formdata):
         options = {}
         options['machinesize'] = ""
+        options['machineimage'] = ""
 
+        machineimage = formdata.get('image', "")[0]
         machinesize = formdata.get('size', "")[0]
+        options['machineimage'] = machineimage
         options['machinesize'] = machinesize
         return options
 
@@ -183,7 +193,7 @@ systemctl enable jupyterhub-singleuser.service
         nets = driver.ex_list_networks()
 
         for i in images:
-            if i.name == self.machine_image:
+            if i.name == self.user_options['machineimage']:
                 self.log.debug("Image found %s" % i.name)
                 machineimage = i
         for s in sizes:
