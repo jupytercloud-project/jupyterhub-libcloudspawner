@@ -127,14 +127,15 @@ class LibcloudSpawner(Spawner):
         """
         self.log.debug("Getting Machine")
         driver = self.getLibCloudDriver()
-        m = driver.ex_get_node_details(machineid)
+        try:
+            m = driver.ex_get_node_details(machineid)
+        except:
+            return None
         self.log.debug(m)
         return m
     
     def getMachineStatus(self):
-        self.log.debug("Getting Machine status")
         machineinfos = self.getMachine(self.machineid)
-        self.log.debug(machineinfos)
         if machineinfos:
             if machineinfos.state == 'running':
                 # Machine running, trying http
@@ -145,7 +146,6 @@ class LibcloudSpawner(Spawner):
                     httptest = None
                 self.log.debug(httptest)
                 return None
-        self.log.debug("Machine NOT ready")
         return 1
 
     def createMachine(self):
@@ -186,8 +186,6 @@ systemctl enable jupyterhub-singleuser.service
                    notebookargs=self.notebookargs,
             )
 
-        self.log.debug(userdata)
-
         images = driver.list_images()
         sizes = driver.list_sizes()
         nets = driver.ex_list_networks()
@@ -215,12 +213,12 @@ systemctl enable jupyterhub-singleuser.service
                                   networks=[machinenet],
                                   ex_keyname="tristanlt",
                                   ex_userdata=userdata)
-        self.log.debug(node)
         return node
 
     def load_state(self, state):
         """load machineid from state"""
         super(LibcloudSpawner, self).load_state(state)
+        self.machineid=state.get('machineid')
         pass
 
     def get_state(self):
@@ -230,15 +228,9 @@ systemctl enable jupyterhub-singleuser.service
             state['machineid'] = self.machineid
         return state
 
-    def clear_state(self):
-        """clear pid state"""
-        super(LibcloudSpawner, self).clear_state()
-        self.machineid = u""
-
     @gen.coroutine
     def start(self):
         """Start the process"""
-        self.log.debug("DEBUG start libcloudSpawner")
         machine = self.createMachine()
         timeout_start = time.time()
         timeout = 30  # seconds
