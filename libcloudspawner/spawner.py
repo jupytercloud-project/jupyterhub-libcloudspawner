@@ -173,9 +173,47 @@ ExecStart=/usr/local/bin/jupyterhub-singleuser --port=8000 --ip=0.0.0.0 --user={
 WantedBy=multi-user.target
 EOF
 
+cat <<EOF > /etc/systemd/system/register-conda-on-jupyter.service
+[Unit]
+Description=Register Conda on Jupyter
+After=jupyterhub-singleuser.service
+ 
+[Service]
+Type=oneshot
+User={user}
+ExecStart=/bin/bash --login /tmp/register-conda-on-jupyter.sh
+StandardOutput=journal+console
+EOF
+
+cat <<EOF > /tmp/register-conda-on-jupyter.sh
+#!/bin/bash
+
+if which conda >/dev/null; then
+        condaenvs="\$(conda info --env |grep -v \# |grep -v ^$ |cut -f1 -d " ")"
+
+        for c in \$condaenvs
+        do
+                echo "Trying to register Conda env \$c"
+                source activate \$c
+                python -m ipykernel install --user --name \$c --display-name "Python (conda-\$c)"
+        done
+else
+    echo "Conda not found"
+fi
+exit 0
+EOF
+
+
 systemctl daemon-reload
+systemctl enable register-conda-on-jupyter.service
 systemctl restart jupyterhub-singleuser.service
 systemctl enable jupyterhub-singleuser.service
+systemctl start register-conda-on-jupyter.service
+
+
+
+sudo -u {user} bash /tmp/register-conda-on-jupyter.sh
+
 """.format(
                    apitoken=self.get_env()["JPY_API_TOKEN"],
                    user=username,
