@@ -5,3 +5,4 @@
 /jupyterhub.sqlite
 *.pyc
 libcloudspawner/__pycache__
+jupyterhub_conf_test.py
