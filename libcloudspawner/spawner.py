@@ -1,3 +1,11 @@
+import random, string
+import requests
+import time
+from time import sleep
+
+import socket
+import http.client
+
 from tornado import gen
 
 from jupyterhub.spawner import Spawner
@@ -6,12 +14,6 @@ from traitlets import (
 )
 from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
-
-import random, string
-
-import requests
-import time
-from time import sleep
 
 import shlex
 
@@ -69,8 +71,25 @@ class LibcloudSpawner(Spawner):
         help='notebookargs'
     )
 
+    def wait_notebook(self, server, port, timeout=None):
+        """ Wait for notebook running by simply request host:port
+            @param timeout: in seconds
+            @return: True of False
+        """
+        try:
+            requests.get("http://%s:%s" % (server,
+                                            port),
+                                            timeout=timeout)
+        except requests.exceptions.RequestException as e:
+            print(e)
+            return None
+        return True
+
     def _options_form_default(self):
-        formhtml=[]
+        """ These options are set by final user in an HTML form
+            Users choices are passed to spawner in self.user_options
+        """
+        formhtml = []
         formhtml.append("<label for=\"args\"> Virtual machine image </label>")
         formhtml.append("<select name=\"image\">")
         for size in self.machine_images:
@@ -109,149 +128,173 @@ class LibcloudSpawner(Spawner):
             env.update(self.user_options['env'])
         return env
 
-    def getLibCloudDriver(self):
-        """
-            Retrieve LibCloudDriver 
-        """
-        cls = get_driver(Provider.OPENSTACK)
-        driver = cls(self.cloud_user, self.cloud_userpassword,
-                     ex_force_auth_version='3.x_password',
-                     ex_force_auth_url=self.cloud_url,
-                     ex_force_service_region=self.cloud_region,
-                     ex_tenant_name=self.cloud_project)
-        return driver
+    #def get_libcloud_driver(self):
+    #    """
+    #        Retrieve LibCloudDriver 
+    #    """
+    #    cls = get_driver(Provider.OPENSTACK)
+    #    driver = cls(self.cloud_user, self.cloud_userpassword,
+    #                 ex_force_auth_version='3.x_password',
+    #                 ex_force_auth_url=self.cloud_url,
+    #                 ex_force_service_region=self.cloud_region,
+    #                 ex_tenant_name=self.cloud_project)
+    #    return driver
 
-    def getMachine(self, machineid):
-        """
-            Retrieve machine informations
-        """
-        self.log.debug("Getting Machine")
-        driver = self.getLibCloudDriver()
-        try:
-            m = driver.ex_get_node_details(machineid)
-        except:
-            return None
-        self.log.debug(m)
-        return m
+    #def get_machine(self, machineid):
+    #    """
+    #        Retrieve machine informations
+    #    """
+    #    self.log.debug("Getting Machine")
+    #    driver = self.get_libcloud_driver()
+    #    try:
+    #        m = driver.ex_get_node_details(machineid)
+    #    except:
+    #        return None
+    #    self.log.debug(m)
+    #    return m
     
-    def getMachineStatus(self):
-        machineinfos = self.getMachine(self.machineid)
-        if machineinfos:
-            if machineinfos.state == 'running':
-                # Machine running, trying http
-                self.log.debug("Machine running. Trying HTTP request on 8000")
-                try:
-                    httptest = requests.head("http://%s:8000" % machineinfos.private_ips[0], max_retries=1)
-                except:
-                    httptest = None
-                self.log.debug(httptest)
-                return None
-        return 1
+    #def get_machine_status(self):
+    #    machineinfos = self.get_machine(self.machineid)
+    #    if machineinfos:
+    #        if machineinfos.state == 'running':
+    #            # Machine running, trying http
+    #            self.log.debug("Machine running. Trying HTTP request on 8000")
+    #            try:
+    #                httptest = requests.head("http://%s:8000" % machineinfos.private_ips[0], max_retries=1)
+    #            except:
+    #                httptest = None
+    #            self.log.debug(httptest)
+    #            return None
+    #    return 1
 
-    def createMachine(self):
-        """
-            Create a machine, return machine informations
-        """
-        self.log.debug("Spawning machine")
-        driver = self.getLibCloudDriver()
-
-        if self.forceuser:
-            username = self.forceuser
-        else:
-            username = self.user.name
-
-        userdata = """#!/bin/bash
-cat <<EOF > /etc/systemd/system/jupyterhub-singleuser.service
-[Unit]
-Description=JupyterHub-singleuser instance
- 
-[Service]
-User={user}
-Environment=JPY_API_TOKEN={apitoken}
-ExecStart=/usr/local/bin/jupyterhub-singleuser --port=8000 --ip=0.0.0.0 --user={user} --cookie-name={cookiename} --base-url={baseurl} --hub-prefix={hubprefix} --hub-api-url={apiurl}  {notebookargs} \$@
-[Install]
-WantedBy=multi-user.target
-EOF
-
-cat <<EOF > /etc/systemd/system/register-conda-on-jupyter.service
-[Unit]
-Description=Register Conda on Jupyter
-After=jupyterhub-singleuser.service
- 
-[Service]
-Type=oneshot
-User={user}
-ExecStart=/bin/bash --login /tmp/register-conda-on-jupyter.sh
-StandardOutput=journal+console
-EOF
-
-cat <<EOF > /tmp/register-conda-on-jupyter.sh
-#!/bin/bash
-
-if which conda >/dev/null; then
-        condaenvs="\$(conda info --env |grep -v \# |grep -v ^$ |cut -f1 -d " ")"
-
-        for c in \$condaenvs
-        do
-                echo "Trying to register Conda env \$c"
-                source activate \$c
-                python -m ipykernel install --user --name \$c --display-name "Python (conda-\$c)"
-        done
-else
-    echo "Conda not found"
-fi
-exit 0
-EOF
-
-
-systemctl daemon-reload
-systemctl enable register-conda-on-jupyter.service
-systemctl restart jupyterhub-singleuser.service
-systemctl enable jupyterhub-singleuser.service
-systemctl start register-conda-on-jupyter.service
-
-
-
-sudo -u {user} bash /tmp/register-conda-on-jupyter.sh
-
-""".format(
-                   apitoken=self.get_env()["JPY_API_TOKEN"],
-                   user=username,
-                   cookiename=self.user.server.cookie_name,
-                   baseurl=self.user.server.base_url,
-                   hubprefix=self.hub.server.base_url,
-                   apiurl=self.hub.api_url,
-                   notebookargs=self.notebookargs,
-            )
-
-        images = driver.list_images()
-        sizes = driver.list_sizes()
-        nets = driver.ex_list_networks()
-
-        for i in images:
-            if i.name == self.user_options['machineimage']:
-                self.log.debug("Image found %s" % i.name)
-                machineimage = i
-        for s in sizes:
-            if s.name == self.user_options['machinesize']:
-                self.log.debug("Size found %s" % s.name)
-                machinesize = s
-        for n in nets:
-            self.log.debug(n.name)
-            if n.name == self.machine_net:
-                self.log.debug("Network found %s" % n.name)
-                machinenet = n
-
-        randomstring = ''.join(random.choice(string.ascii_uppercase) for _ in range(6))
-
-        machinename = ("jpy-%s-%s" % (self.user.name, randomstring))
-        node = driver.create_node(name=machinename,
-                                  image=machineimage,
-                                  size=machinesize,
-                                  networks=[machinenet],
-                                  ex_keyname="tristanlt",
-                                  ex_userdata=userdata)
-        return node
+#     def create_machine(self):
+#         """
+#             Create a machine, return machine informations
+#         """
+#         self.log.debug("create_machine start")
+#         driver = self.get_libcloud_driver()
+# 
+#         if self.forceuser:
+#             username = self.forceuser
+#         else:
+#             username = self.user.name
+# 
+#         userdata = """#!/bin/bash
+# cat <<EOF > /etc/systemd/system/jupyterhub-singleuser.service
+# [Unit]
+# Description=JupyterHub-singleuser instance
+#  
+# [Service]
+# User={user}
+# Environment=JPY_API_TOKEN={apitoken}
+# ExecStart=/usr/local/bin/jupyterhub-singleuser --port=8000 --ip=0.0.0.0 --user={user} --cookie-name={cookiename} --base-url={baseurl} --hub-prefix={hubprefix} --hub-api-url={apiurl}  {notebookargs} \$@
+# [Install]
+# WantedBy=multi-user.target
+# EOF
+# 
+# cat <<EOF > /etc/systemd/system/register-conda-on-jupyter.service
+# [Unit]
+# Description=Register Conda on Jupyter
+# After=jupyterhub-singleuser.service
+#  
+# [Service]
+# Type=oneshot
+# User={user}
+# ExecStart=/bin/bash --login /tmp/register-conda-on-jupyter.sh
+# StandardOutput=journal+console
+# EOF
+# 
+# cat <<EOF > /tmp/register-conda-on-jupyter.sh
+# #!/bin/bash
+# 
+# if which conda >/dev/null; then
+#         condaenvs="\$(conda info --env |grep -v \# |grep -v ^$ |cut -f1 -d " ")"
+# 
+#         for c in \$condaenvs
+#         do
+#                 echo "Trying to register Conda env \$c"
+#                 source activate \$c
+#                 python -m ipykernel install --user --name \$c --display-name "Python (conda-\$c)"
+#         done
+# else
+#     echo "Conda not found"
+# fi
+# exit 0
+# EOF
+# 
+# 
+# systemctl daemon-reload
+# systemctl enable register-conda-on-jupyter.service
+# systemctl restart jupyterhub-singleuser.service
+# systemctl enable jupyterhub-singleuser.service
+# systemctl start register-conda-on-jupyter.service
+# 
+# 
+# 
+# sudo -u {user} bash /tmp/register-conda-on-jupyter.sh
+# 
+# """.format(
+#                    apitoken=self.get_env()["JPY_API_TOKEN"],
+#                    user=username,
+#                    cookiename=self.user.server.cookie_name,
+#                    baseurl=self.user.server.base_url,
+#                    hubprefix=self.hub.server.base_url,
+#                    apiurl=self.hub.api_url,
+#                    notebookargs=self.notebookargs,
+#             )
+# 
+#         images = driver.list_images()
+#         sizes = driver.list_sizes()
+#         nets = driver.ex_list_networks()
+# 
+#         for i in images:
+#             if i.name == self.user_options['machineimage']:
+#                 self.log.debug("Image found %s" % i.name)
+#                 machineimage = i
+#         for s in sizes:
+#             if s.name == self.user_options['machinesize']:
+#                 self.log.debug("Size found %s" % s.name)
+#                 machinesize = s
+#         for n in nets:
+#             self.log.debug(n.name)
+#             if n.name == self.machine_net:
+#                 self.log.debug("Network found %s" % n.name)
+#                 machinenet = n
+# 
+#         randomstring = ''.join(random.choice(string.ascii_uppercase) for _ in range(6))
+# 
+#         machinename = ("jpy-%s-%s" % (self.user.name, randomstring))
+#         node = driver.create_node(name=machinename,
+#                                   image=machineimage,
+#                                   size=machinesize,
+#                                   networks=[machinenet],
+#                                   ex_keyname="tristanlt",
+#                                   ex_userdata=userdata)
+# 
+#         self.log.debug("CreateMachine waiting while node is running (or timeout)")
+#         nodesok = driver.wait_until_running([node],
+#                                           wait_period=1,
+#                                           timeout=60)
+# 
+#         #import pdb
+#         #pdb.set_trace()
+# 
+#         if nodesok:
+#             self.log.debug("CreateMachine node is running, checking user notebook")
+#             nodeok = nodesok[0][0]
+# 
+#             self.log.debug("CreateMachine checking notebook at %s:%s" % ([nodeok.public_ips or nodeok.private_ips][0][0], str(8000)))
+#             notebookcheck = self.wait_notebook([nodeok.public_ips or nodeok.private_ips][0][0],
+#                                                8000,
+#                                                60)
+#             if notebookcheck:
+#                 self.log.debug("CreateMachine notebook responding :)")
+#                 return nodeok
+#             else:
+#                 return None
+#         else:
+#             self.log.debug("CreateMachine node  not running after timeout")
+#             return None
 
     def load_state(self, state):
         """load machineid from state"""
@@ -269,39 +312,41 @@ sudo -u {user} bash /tmp/register-conda-on-jupyter.sh
     @gen.coroutine
     def start(self):
         """Start the process"""
-        machine = self.createMachine()
-        timeout_start = time.time()
-        timeout = 30  # seconds
-        cont = True
-        while (time.time() < timeout_start + timeout) and cont:
-            m = self.getMachine(machineid=machine.id)
-            if m.state == "running":
-                self.log.debug("Machine ready, updating Jupyter db")
-                # Nice ! our instance is up and ready !
-                self.user.server.port = 8000
-                if len(m.private_ips) > 0:
-                    self.user.server.ip = m.private_ips[0]
-                if len(m.public_ips) > 0:
-                    self.user.server.ip = m.public_ips[0]
-                self.machineid = m.id
-                cont = False
-            sleep(1)
-        self.db.commit()
+        machine = self.create_machine()
+        if machine:
+            self.log.debug("START receive node info")
+            # Nice ! our instance is up and ready !
+            #Setting port
+            self.user.server.port = 8000
+
+            #Setting IP, public IP or private 
+            if len(machine.private_ips) > 0:
+                self.user.server.ip = machine.private_ips[0]
+            if len(machine.public_ips) > 0:
+                self.user.server.ip = machine.public_ips[0]
+
+            self.machineid = machine.id
+            self.db.commit()
+        else:
+            self.log.debug("START create_machine return no machine :(")
+            return None
+        return(self.user.server.ip, self.user.server.port)
+
 
     @gen.coroutine
     def poll(self):
         """Poll the process"""
         if self.machineid:
-            return self.getMachineStatus()
+            return self.get_machine_status()
         else:
             return 1
 
     @gen.coroutine
     def stop(self):
         self.log.debug("DELETE Cloud instance %s " % self.machineid)
-        driver = self.getLibCloudDriver()
-        if not self.getMachineStatus():
+        driver = self.get_libcloud_driver()
+        if not self.get_machine_status():
             self.log.debug("Cloud instance running, send delete for %s " % self.machineid)
-            m = self.getMachine(self.machineid)
+            m = self.get_machine(self.machineid)
             driver.destroy_node(m)
         return
