@@ -1,10 +1,11 @@
-import random, string
+#import random
+#import string
 import requests
-import time
-from time import sleep
+#import time
+#from time import sleep
 
-import socket
-import http.client
+#import socket
+#import http.client
 
 from tornado import gen
 
@@ -12,13 +13,17 @@ from jupyterhub.spawner import Spawner
 from traitlets import (
     Instance, Integer, Unicode, List, Bool
 )
-from libcloud.compute.types import Provider
-from libcloud.compute.providers import get_driver
 
-import shlex
+from manager.nodemanager import NodeManager
+
+#from libcloud.compute.types import Provider
+#from libcloud.compute.providers import get_driver
+#import shlex
+
 
 class LibcloudSpawner(Spawner):
     """A Spawner that create notebook inside NooCloud."""
+
 
     cloud_url = Unicode(
         "https://noocloud.univ-brest.fr/keystone/v3/auth/tokens",
@@ -71,19 +76,29 @@ class LibcloudSpawner(Spawner):
         help='notebookargs'
     )
 
-    def wait_notebook(self, server, port, timeout=None):
-        """ Wait for notebook running by simply request host:port
-            @param timeout: in seconds
-            @return: True of False
-        """
-        try:
-            requests.get("http://%s:%s" % (server,
-                                            port),
-                                            timeout=timeout)
-        except requests.exceptions.RequestException as e:
-            print(e)
-            return None
-        return True
+#     def wait_notebook(self, server, port,     =None):
+#         """ Wait for notebook running by simply request host:port
+#             @param timeout: in seconds
+#             @return: True of False
+#         """
+#         try:
+#             requests.get("http://%s:%s" % (server,
+#                                             port),
+#                                             timeout=timeout)
+#         except requests.exceptions.RequestException as e:
+#             print(e)
+#             return None
+#         return True
+
+    def __init__(self, **kwargs):
+        super(LibcloudSpawner, self).__init__(**kwargs)
+        if self.user.state:
+            self.load_state(self.user.state)
+
+        self.nodemanager = NodeManager(self,
+                                       logguer=self.log)
+
+
 
     def _options_form_default(self):
         """ These options are set by final user in an HTML form
@@ -312,20 +327,23 @@ class LibcloudSpawner(Spawner):
     @gen.coroutine
     def start(self):
         """Start the process"""
-        machine = self.create_machine()
-        if machine:
-            self.log.debug("START receive node info")
+
+        self.log.debug(self.get_env()["JPY_API_TOKEN"])
+
+        api_token = self.get_env()["JPY_API_TOKEN"]
+        res = self.nodemanager.create_machine(api_token)
+
+        if res:
             # Nice ! our instance is up and ready !
+            self.log.debug("START receive node info")
+
             #Setting port
-            self.user.server.port = 8000
-
-            #Setting IP, public IP or private 
-            if len(machine.private_ips) > 0:
-                self.user.server.ip = machine.private_ips[0]
-            if len(machine.public_ips) > 0:
-                self.user.server.ip = machine.public_ips[0]
-
-            self.machineid = machine.id
+            self.user.server.ip = self.nodemanager.node_ip
+            self.user.server.port = self.nodemanager.node_port
+            self.machineid = self.nodemanager.node.id
+            self.log.info("Notebook ready at %s:%s (%s)" % (self.user.server.ip,
+                                                            self.user.server.port,
+                                                            self.machineid))
             self.db.commit()
         else:
             self.log.debug("START create_machine return no machine :(")
@@ -336,17 +354,10 @@ class LibcloudSpawner(Spawner):
     @gen.coroutine
     def poll(self):
         """Poll the process"""
-        if self.machineid:
-            return self.get_machine_status()
-        else:
-            return 1
+        return self.nodemanager.get_node_status()
 
     @gen.coroutine
     def stop(self):
         self.log.debug("DELETE Cloud instance %s " % self.machineid)
-        driver = self.get_libcloud_driver()
-        if not self.get_machine_status():
-            self.log.debug("Cloud instance running, send delete for %s " % self.machineid)
-            m = self.get_machine(self.machineid)
-            driver.destroy_node(m)
+        self.nodemanager.destroy_node()
         return
