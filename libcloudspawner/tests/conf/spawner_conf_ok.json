@@ -1,0 +1,43 @@
+{
+    "cloud_project": "cloudproject",
+    "cloud_region": "region",
+    "cloud_url": "https://api.noo.cloud/keystone/v3/auth/tokens",
+    "cloud_user": "user",
+    "cloud_userpassword": "secret",
+    "forceuser": "",
+    "hub": {
+        "api_url": "http://jupyterhub/api",
+        "server": {
+            "base_url": "/app/notebooks"
+        }
+    },
+    "machine_images": [
+        [
+            "Default image",
+            "u16-jhub-usernotebook"
+        ]
+    ],
+    "machine_net": "project-network",
+    "machine_sizes": [
+        [
+            "n0-small",
+            "n0-small"
+        ],
+        [
+            "n0-medium",
+            "n0-medium"
+        ]
+    ],
+    "notebookargs": "--notebook-dir=~",
+    "user": {
+        "name": "rickdangerous",
+        "server": {
+            "base_url": "/app/notebooks",
+            "cookie_name": "JPY_RICKDANGEROUS_COOKIE"
+        }
+    },
+    "user_options": {
+        "machineimage": "u16-jhub-usernotebook",
+        "machinesize": "n0-small"
+    }
+}
