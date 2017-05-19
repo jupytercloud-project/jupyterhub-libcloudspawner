@@ -1,0 +1,22 @@
+CHANGES
+=======
+
+* Refactored version OK, but without spring cleanup
+* Refactoring and PEP8 compliance
+* Added test config-file to gitignore
+* Conda support, if user has conda envs kernel was added to notebooks
+* Correction on state management
+* Add a select form to permit image choice
+* Now we can use public instance IP
+* Bug fix after class rename
+* Continue cleaning
+* Cleaning Eclipse files and co
+* Correction on classname
+* Added example config file
+* Rename project from nooCloudSpawner to libcloudSpawner
+* Correct a config bug for notebookargs and forceuser
+* Ajout du test http
+* Ajout des variables configurations pour forcer le user et les args
+* Retrait mauvaises dépendences
+* First working version
+* Version based on nooAPI
