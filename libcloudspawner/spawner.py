@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+# _*_ coding : utf-8 _*_
+
+""" spwaner.py : jupyter-libcloudSpawner Spawner Class loaded by JupyterHub
+"""
+
+__author__ = "Tristan Le Toullec"
+__copyright__ = "Copyright 2017, LOPS"
+__credits__ = ["Tristan Le Toullec"]
+__license__ = "CeCILL-B"
+__maintainer__ = "Tristan Le Toullec"
+__email__ = "tristan.letoullec@cnrs.fr"
+
 #import random
 #import string
 import requests
@@ -14,7 +27,7 @@ from traitlets import (
     Instance, Integer, Unicode, List, Bool
 )
 
-from manager.nodemanager import NodeManager
+from libcloudspawner.manager.nodemanager import NodeManager
 
 #from libcloud.compute.types import Provider
 #from libcloud.compute.providers import get_driver
