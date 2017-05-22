@@ -10,8 +10,6 @@ __license__ = "CeCILL-B"
 __maintainer__ = "Tristan Le Toullec"
 __email__ = "tristan.letoullec@cnrs.fr"
 
-from .errors import NetworkNotFoundError, ImageNotFoundError, SizeNotFoundError
-
 import random
 import string
 import socket
@@ -21,6 +19,9 @@ import time
 from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
 
+from .errors import NetworkNotFoundError, ImageNotFoundError, SizeNotFoundError
+
+
 class NodeManager(object):
     """ NodeManager have tools to connect with cloud,
     NodeManager create, audit and delete virtual machines
@@ -28,7 +29,6 @@ class NodeManager(object):
 
     def __init__(self, spawner_conf, logguer):
 
-        #cls = get_driver(Provider.OPENSTACK)
         cls = self._get_provider()
 
         self.driver = cls(spawner_conf.cloud_user,
@@ -42,19 +42,10 @@ class NodeManager(object):
         self.spawner_conf = spawner_conf
         self.node = None
         self.node_ip = None
-        self.node_port = 8000 # TODO this parameter should be set by spawner_conf
-        self.timeout = 120 # TODO this parameter should be set by spawner_conf 
-
-#         cls = self._get_provider()
-# 
-#         self.driver = cls(user=spawner_conf.cloud_user,
-#                           password=spawner_conf.cloud_userpassword,
-#                           ex_force_auth_version='3.x_password',
-#                           ex_force_auth_url=spawner_conf.cloud_url,
-#                           ex_force_service_region=spawner_conf.cloud_region,
-#                           ex_tenant_name=spawner_conf.cloud_project,
-#                           key=None)
-
+        # TODO this parameter should be set by spawner_conf
+        self.node_port = 8000
+        # TODO this parameter should be set by spawner_conf
+        self.timeout = 120
 
     def _get_provider(self):
         return get_driver(Provider.OPENSTACK)
@@ -113,7 +104,8 @@ class NodeManager(object):
         try:
             self.node = self.driver.ex_get_node_details(self.node.id)
         except:
-            self.logguer.debug("Can not retrieve node information from cloud provider")
+            self.logguer.debug("Can not retrieve node information \
+            from cloud provider")
 
     def _update_node_net_informations(self):
         """

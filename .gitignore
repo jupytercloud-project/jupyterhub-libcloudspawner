@@ -9,3 +9,4 @@ jupyterhub_conf_noocloud.py
 .tox
 libcloudspawner.egg-info
 doc/build
+build/

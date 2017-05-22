@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # _*_ coding : utf-8 _*_
 
-""" spwaner.py : jupyter-libcloudSpawner Spawner Class loaded by JupyterHub
+""" CloudManager errors with cloud
 """
 
 __author__ = "Tristan Le Toullec"
@@ -13,7 +13,8 @@ __email__ = "tristan.letoullec@cnrs.fr"
 
 
 class ImageNotFoundError(Exception):
-    """ The requested image was not found by cloud driver
+    """ This exception was raised in case requested image \
+    was not found by cloud driver
     """
 
     def __init__(self):
@@ -26,7 +27,7 @@ class ImageNotFoundError(Exception):
 
 
 class NetworkNotFoundError(Exception):
-    """ The requested network was not found by cloud driver
+    """ This exception was raised in case network was not found by cloud driver
     """
 
     def __init__(self):
@@ -38,7 +39,7 @@ class NetworkNotFoundError(Exception):
 
 
 class SizeNotFoundError(Exception):
-    """ The requested size/flavor was not found by cloud driver
+    """ This exception was raised in case size/flavor was not found by cloud driver
     """
 
     def __init__(self):
