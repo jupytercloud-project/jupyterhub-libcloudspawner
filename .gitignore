@@ -7,4 +7,5 @@
 libcloudspawner/__pycache__
 jupyterhub_conf_noocloud.py
 .tox
-jupyter_libcloudspawner.egg-info
+libcloudspawner.egg-info
+doc/build

@@ -1,6 +1,12 @@
 CHANGES
 =======
 
+1.1a1
+-----
+
+* Starting with pbr
+* Unittest coverage ~ 5% shame!
+* Better, faster, stronger..
 * Refactored version OK, but without spring cleanup
 * Refactoring and PEP8 compliance
 * Added test config-file to gitignore
