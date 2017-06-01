@@ -16,7 +16,7 @@ import requests
 from tornado import gen
 from jupyterhub.spawner import Spawner
 from traitlets import (
-    Instance, Integer, Unicode, List, Bool
+    Instance, Integer, Unicode, List, Bool, Dict
 )
 
 from libcloudspawner.manager.nodemanager import NodeManager
@@ -75,6 +75,11 @@ class LibcloudSpawner(Spawner):
         config=True,
         help='notebookargs'
     )
+    libcloudparams = Dict(
+        {},
+        config=True,
+        help='LibCloud cloud Configuration'
+    ) 
 
     def __init__(self, **kwargs):
         super(LibcloudSpawner, self).__init__(**kwargs)
@@ -83,19 +88,20 @@ class LibcloudSpawner(Spawner):
                                        logguer=self.log)
         if self.user.state:
             self.load_state(self.user.state)
+            self.nodemanager.retrieve_node(self.user.state['machineid'])
 
     def _options_form_default(self):
         """ These options are set by final user in an HTML form
             Users choices are passed to spawner in self.user_options
         """
         formhtml = []
-        formhtml.append("<label for=\"args\"> Virtual machine image </label>")
+        formhtml.append("<label for=\"args\"> Notebook type </label>")
         formhtml.append("<select name=\"image\">")
         for size in self.machine_images:
             option = "<option value=\"%s\"> %s </option>" % (size[1], size[0])
             formhtml.append(option)
         formhtml.append("</select>")
-        formhtml.append("<label for=\"args\"> Virtual machine size </label>")
+        formhtml.append("<label for=\"args\"> Ressources </label>")
         formhtml.append("<select name=\"size\">")
         for size in self.machine_sizes:
             option = "<option value=\"%s\"> %s </option>" % (size[1], size[0])

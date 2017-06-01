@@ -31,12 +31,21 @@ class NodeManager(object):
 
         cls = self._get_provider()
 
-        self.driver = cls(spawner_conf.cloud_user,
-                          spawner_conf.cloud_userpassword,
-                          ex_force_auth_version='3.x_password',
-                          ex_force_auth_url=spawner_conf.cloud_url,
-                          ex_force_service_region=spawner_conf.cloud_region,
-                          ex_tenant_name=spawner_conf.cloud_project)
+#         self.driver = cls(spawner_conf.cloud_user,
+#                           spawner_conf.cloud_userpassword,
+#                           ex_force_auth_version='3.x_password',
+#                           ex_force_auth_url=spawner_conf.cloud_url,
+#                           ex_force_service_region=spawner_conf.cloud_region,
+#                           ex_tenant_name=spawner_conf.cloud_project)
+
+        print(spawner_conf.libcloudparams)
+
+        # Note : spawner_conf.libcloudparams can't be used as full **kwargs
+        # because libcloud.compute.drivers.OpenStackNodeDriver should receive
+        # user_id and key as **args and everything else as **kwargs...
+        self.driver = cls(spawner_conf.libcloudparams['arg_user_id'],
+                          spawner_conf.libcloudparams['arg_key'],
+                          **spawner_conf.libcloudparams)
 
         self.logguer = logguer
         self.spawner_conf = spawner_conf
@@ -144,6 +153,16 @@ class NodeManager(object):
             break
 
         return conn_ok
+
+    def retrieve_node(self, id):
+        """
+        Search for node with id on cloud (used in load_state after jupyter kill)
+        """
+        try:
+            self.node = self.driver.ex_get_node_details(id)
+        except:
+            self.logguer.debug("Can not retrieve node information \
+            from cloud provider")
 
     def get_node(self):
         """
