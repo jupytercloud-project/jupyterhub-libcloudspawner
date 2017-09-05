@@ -16,6 +16,8 @@ import socket
 import datetime
 import time
 
+import jinja2
+
 from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
 
@@ -131,15 +133,19 @@ class NodeManager(object):
             @param timeout: in seconds
             @return: True of False
         """
-        self.logguer.debug("HTTP Notebook check @%s:%s" % (self.node_ip, self.node_port))
+        self.logguer.debug("HTTP Notebook check @%s:%s" % (self.node_ip,
+                                                           self.node_port))
 
         now = datetime.datetime.now()
         notafter = now + datetime.timedelta(seconds=self.timeout)
 
         conn_ok = False
         while datetime.datetime.now() < notafter:
-            self.logguer.debug("Trying connection @%s:%s" % (self.node_ip,
-                                                             self.node_port))
+            tictac = notafter - datetime.datetime.now() 
+            self.logguer.debug("Trying connection @%s:%s (timeout %s)" % (
+                                                        self.node_ip,
+                                                        self.node_port,
+                                                        tictac))
 
             # Try to connect to notebook port
             try:
@@ -211,53 +217,48 @@ class NodeManager(object):
         else:
             username = self.spawner_conf.user.name
 
-        userdata = """#!/bin/bash
-cat <<EOF > /etc/systemd/system/jupyterhub-singleuser.service
-[Unit]
-Description=JupyterHub-singleuser instance
- 
-[Service]
-User={user}
-Environment=JPY_API_TOKEN={apitoken}
-ExecStart=/usr/local/bin/jupyterhub-singleuser --port=8000 --ip=0.0.0.0 --user={user} --cookie-name={cookiename} --base-url={baseurl} --hub-prefix={hubprefix} --hub-api-url={apiurl}  {notebookargs} \$@
-[Install]
-WantedBy=multi-user.target
-EOF
+        env = jinja2.Environment(
+                          loader=jinja2.PackageLoader(
+                                self.spawner_conf.userdata_template_module,
+                                'data'))
 
-systemctl daemon-reload
-systemctl restart jupyterhub-singleuser.service
-systemctl enable jupyterhub-singleuser.service
-""".format(
+        userdata_template = env.get_template(
+                                self.spawner_conf.userdata_template_name)
+
+        userdata = userdata_template.render(
                    apitoken=str(api_token),
                    user=username,
                    cookiename=self.spawner_conf.user.server.cookie_name,
                    baseurl=self.spawner_conf.user.server.base_url,
                    hubprefix=self.spawner_conf.hub.server.base_url,
                    apiurl=self.spawner_conf.hub.api_url,
-                   notebookargs=self.spawner_conf.notebookargs,
-            )
+                   notebookargs=self.spawner_conf.notebookargs)
+
+        node_conf = {}
 
         # Search image
         imagename = self.spawner_conf.user_options['machineimage']
-        machineimage = self._get_image(imagename)
+        node_conf['image'] = self._get_image(imagename)
 
         # Search size /flavor
         sizename = self.spawner_conf.user_options['machinesize']
-        machinesize = self._get_size(sizename)
+        node_conf['size'] = self._get_size(sizename)
 
         # Search network
         netname = self.spawner_conf.machine_net
-        machinenet = self._get_network(netname)
+        node_conf['networks'] = [self._get_network(netname)]
 
         # Generate nodename
-        nodename = self._generate_machine_name(self.spawner_conf.user.name)
+        node_conf['name'] = self._generate_machine_name(
+                                    self.spawner_conf.user.name)
+
+        node_conf['ex_userdata'] = userdata
+
+        if "ex_keyname" in self.spawner_conf.libcloudparams.keys():
+            node_conf['ex_keyname'] = self.spawner_conf.libcloudparams['ex_keyname']
 
         # Create machine
-        node = self.driver.create_node(name=nodename,
-                                       image=machineimage,
-                                       size=machinesize,
-                                       networks=[machinenet],
-                                       ex_userdata=userdata)
+        node = self.driver.create_node(**node_conf)
 
         # Wait machine state==running
         # ! this method return an array of (one) nodes

@@ -42,6 +42,18 @@ class LibcloudSpawner(Spawner):
         config=True,
         help=''
     )
+    userdata_template_module = Unicode(
+        'libcloudspawner',
+        config=True,
+        help='''Module where libcloudspawner can find a jinja2 template folder for 
+        userdata script
+        '''
+    )
+    userdata_template_name = Unicode(
+        'userdata.sh.j2',
+        config=True,
+        help='''Template name for userdata script'''
+    )
     machine_sizes = List(
         [],
         config=True,
