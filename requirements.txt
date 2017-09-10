@@ -1,3 +1,4 @@
 apache-libcloud
 Jinja2
 jupyterhub
+statsd

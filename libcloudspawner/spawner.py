@@ -12,6 +12,7 @@ __maintainer__ = "Tristan Le Toullec"
 __email__ = "tristan.letoullec@cnrs.fr"
 
 import requests
+import time
 
 from tornado import gen
 from jupyterhub.spawner import Spawner
@@ -20,6 +21,7 @@ from traitlets import (
 )
 
 from libcloudspawner.manager.nodemanager import NodeManager
+from statsd import StatsClient
 
 
 class LibcloudSpawner(Spawner):
@@ -92,9 +94,22 @@ class LibcloudSpawner(Spawner):
         config=True,
         help='LibCloud cloud Configuration'
     ) 
+    statsdparams = Dict(
+        {},
+        config=True,
+        help='Statsd dict params host, port and prefix. See StatsClient for more options.'
+        )
 
     def __init__(self, **kwargs):
         super(LibcloudSpawner, self).__init__(**kwargs)
+
+        # Trying to bind to statsd
+        self.statsd = None
+        if self.statsdparams:
+            try:
+                self.statsd = StatsClient(**self.statsdparams)
+            except:
+                self.log.info('Failed to connect to statsd daemon')
 
         self.nodemanager = NodeManager(self,
                                        logguer=self.log)
@@ -164,10 +179,17 @@ class LibcloudSpawner(Spawner):
 
         self.log.debug(self.get_env()["JPY_API_TOKEN"])
 
+        start = time.time()
+
         api_token = self.get_env()["JPY_API_TOKEN"]
         res = self.nodemanager.create_machine(api_token)
 
         if res:
+            # If statsd Ok, sending delay before notebook was ok
+            if self.statsd:
+                dt = int((time.time() - start) * 1000)
+                self.statsd.timing('spawn.delay', dt)
+
             # Nice ! our instance is up and ready !
             self.log.debug("START receive node info")
 
@@ -181,6 +203,9 @@ class LibcloudSpawner(Spawner):
                            self.machineid))
             self.db.commit()
         else:
+            # If spawn failed, incr error counter 
+            if self.statsd:
+                self.statsd.incr('spawn.failed')
             self.log.debug("START create_machine return no machine :(")
             return None
         return(self.user.server.ip, self.user.server.port)
