@@ -46,8 +46,6 @@ class NodeManager(object):
         self.node_ip = None
         # TODO this parameter should be set by spawner_conf
         self.node_port = 8000
-        # TODO this parameter should be set by spawner_conf
-        self.timeout = 120
 
     def _get_provider(self):
         return get_driver(Provider.OPENSTACK)
@@ -119,40 +117,8 @@ class NodeManager(object):
         else:
             self.node_ip = None
 
-    def _check_notebook(self):
-        """ Wait for notebook running by simply request host:port
-            @param timeout: in seconds
-            @return: True of False
-        """
-        self.logguer.debug("HTTP Notebook check @%s:%s" % (self.node_ip,
-                                                           self.node_port))
-
-        now = datetime.datetime.now()
-        notafter = now + datetime.timedelta(seconds=self.timeout)
-
-        conn_ok = False
-        while datetime.datetime.now() < notafter:
-            tictac = notafter - datetime.datetime.now() 
-            self.logguer.debug("Trying connection @%s:%s (timeout %s)" % (
-                                                        self.node_ip,
-                                                        self.node_port,
-                                                        tictac))
-
-            # Try to connect to notebook port
-            try:
-                socket.create_connection((self.node_ip, self.node_port), 3)
-            except:
-                time.sleep(1)
-                continue
-            # Node notebook port open : "feu patate!"
-            self.logguer.debug("HTTP Notebook check @%s:%s is OK" % (self.node_ip, self.node_port))
-            conn_ok = True
-            break
-
-        return conn_ok
-
-    def _check_notebook_nowait(self):
-        """ Check for notebook
+    def _check_notebook_service(self):
+        """ Check for notebook service port opened and responding
         """
         self.logguer.debug("HTTP Notebook check @%s:%s" % (self.node_ip,
                                                            self.node_port))
@@ -201,8 +167,11 @@ class NodeManager(object):
                 # Node Ok, updating network informations
                 self._update_node_net_informations()
 
+                self.logguer.debug("Node running, now checking service... @ %s:%s" % (
+                    self.node_ip, self.node_port))
+
                 # Notebook ? Did you respond ?
-                if self._check_notebook_nowait():
+                if self._check_notebook_service():
                     return None
                 else:
                     return 1
@@ -210,7 +179,7 @@ class NodeManager(object):
 
     def create_machine(self, api_token):
         """
-            Create a machine, return machine informations
+            Create a machine, return nothing
         """
         self.logguer.debug("create_machine start")
 
@@ -261,14 +230,4 @@ class NodeManager(object):
 
         # Create machine
         self.node = self.driver.create_node(**node_conf)
-
-        while True:
-            time.sleep(1)
-            self.get_node_status()
-            self.logguer.debug(self.node)
-            
-            if self._check_notebook_nowait():
-                self._update_node_net_informations()
-                yield (self.node_ip, self.node_port)
-            else:
-                yield None
+        self.logguer.debug("create_machine stop")

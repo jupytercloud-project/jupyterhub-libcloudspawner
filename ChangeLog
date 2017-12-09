@@ -1,6 +1,7 @@
 CHANGES
 =======
 
+* Start working on non-blocking version.(coroutine)
 * Introducing statsd options to graph error and spawn delay
 * Userdata template was now an option
 * Fixes respawn of notebooks after kill -9 on jhub
