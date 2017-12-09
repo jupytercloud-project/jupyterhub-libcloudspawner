@@ -33,15 +33,6 @@ class NodeManager(object):
 
         cls = self._get_provider()
 
-#         self.driver = cls(spawner_conf.cloud_user,
-#                           spawner_conf.cloud_userpassword,
-#                           ex_force_auth_version='3.x_password',
-#                           ex_force_auth_url=spawner_conf.cloud_url,
-#                           ex_force_service_region=spawner_conf.cloud_region,
-#                           ex_tenant_name=spawner_conf.cloud_project)
-
-        print(spawner_conf.libcloudparams)
-
         # Note : spawner_conf.libcloudparams can't be used as full **kwargs
         # because libcloud.compute.drivers.OpenStackNodeDriver should receive
         # user_id and key as **args and everything else as **kwargs...
@@ -160,6 +151,17 @@ class NodeManager(object):
 
         return conn_ok
 
+    def _check_notebook_nowait(self):
+        """ Check for notebook
+        """
+        self.logguer.debug("HTTP Notebook check @%s:%s" % (self.node_ip,
+                                                           self.node_port))
+        try:
+            socket.create_connection((self.node_ip, self.node_port), 3)
+        except:
+            return False
+        return True
+
     def retrieve_node(self, id):
         """
         Search for node with id on cloud (used in load_state after jupyter kill)
@@ -200,7 +202,7 @@ class NodeManager(object):
                 self._update_node_net_informations()
 
                 # Notebook ? Did you respond ?
-                if self._check_notebook():
+                if self._check_notebook_nowait():
                     return None
                 else:
                     return 1
@@ -258,25 +260,15 @@ class NodeManager(object):
             node_conf['ex_keyname'] = self.spawner_conf.libcloudparams['ex_keyname']
 
         # Create machine
-        node = self.driver.create_node(**node_conf)
+        self.node = self.driver.create_node(**node_conf)
 
-        # Wait machine state==running
-        # ! this method return an array of (one) nodes
-        self.logguer.debug("CreateMachine waiting state==running")
-        nodesok = self.driver.wait_until_running([node],
-                                                 wait_period=1,
-                                                 timeout=self.timeout)
-
-        if nodesok:
-            self.logguer.debug("CreateMachine node is running, checking user notebook")
-            self.node = nodesok[0][0]
-
-            self._update_node_net_informations()
-
-            if self._check_notebook():
-                return True
+        while True:
+            time.sleep(1)
+            self.get_node_status()
+            self.logguer.debug(self.node)
+            
+            if self._check_notebook_nowait():
+                self._update_node_net_informations()
+                yield (self.node_ip, self.node_port)
             else:
-                return False
-        else:
-            self.logguer.debug("CreateMachine node not running after timeout")
-            return False
+                yield None

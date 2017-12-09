@@ -179,36 +179,26 @@ class LibcloudSpawner(Spawner):
 
         self.log.debug(self.get_env()["JPY_API_TOKEN"])
 
-        start = time.time()
-
         api_token = self.get_env()["JPY_API_TOKEN"]
-        res = self.nodemanager.create_machine(api_token)
+        return self.nodemanager.create_machine(api_token)
 
-        if res:
-            # If statsd Ok, sending delay before notebook was ok
-            if self.statsd:
-                dt = int((time.time() - start) * 1000)
-                self.statsd.timing('spawn.delay', dt)
-
-            # Nice ! our instance is up and ready !
-            self.log.debug("START receive node info")
-
-            #Setting port
-            self.user.server.ip = self.nodemanager.node_ip
-            self.user.server.port = self.nodemanager.node_port
-            self.machineid = self.nodemanager.node.id
-            self.log.info("Notebook ready at %s:%s (%s)" %
-                          (self.user.server.ip,
-                           self.user.server.port,
-                           self.machineid))
-            self.db.commit()
-        else:
-            # If spawn failed, incr error counter 
-            if self.statsd:
-                self.statsd.incr('spawn.failed')
-            self.log.debug("START create_machine return no machine :(")
-            return None
-        return(self.user.server.ip, self.user.server.port)
+#         if res:
+#             # Nice ! our instance is up and ready !
+#             self.log.debug("START receive node info")
+# 
+#             #Setting port
+#             self.user.server.ip = self.nodemanager.node_ip
+#             self.user.server.port = self.nodemanager.node_port
+#             self.machineid = self.nodemanager.node.id
+#             self.log.info("Notebook ready at %s:%s (%s)" %
+#                           (self.user.server.ip,
+#                            self.user.server.port,
+#                            self.machineid))
+#             self.db.commit()
+#             yield (self.user.server.ip, self.user.server.port)
+#         else:
+#             self.log.debug("START create_machine return no machine :(")
+#             yield None
 
 
     @gen.coroutine
