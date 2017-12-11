@@ -10,6 +10,9 @@ Welcome to libcloudspawner's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   about
+   install
+
    api/modules
 
 

@@ -1,6 +1,7 @@
 CHANGES
 =======
 
+* Coroutine now work like a charm
 * Start working on non-blocking version.(coroutine)
 * Introducing statsd options to graph error and spawn delay
 * Userdata template was now an option

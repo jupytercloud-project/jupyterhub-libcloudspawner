@@ -27,77 +27,104 @@ from statsd import StatsClient
 class LibcloudSpawner(Spawner):
     """A Spawner that create notebook inside NooCloud."""
 
+    #: Cloud API url (auth)
+    #:
+    #: ie: https://controler:5000/v3/auth/tokens
+    #: 
+    #: (required for: Openstack)
     cloud_url = Unicode(
         "https://noocloud.univ-brest.fr/keystone/v3/auth/tokens",
-        config=True,
-        help=''
+        config=True
     )
+    #: Cloud username to manage nodes
+    #:
+    #: (required for: Openstack)
     cloud_user = Unicode(
-        config=True,
-        help=''
+        config=True
     )
+    #: Cloud password to manage nodes
+    #:
+    #: (required for: Openstack)
     cloud_userpassword = Unicode(
-        config=True,
-        help=''
+        config=True
     )
+    #: Cloud tenant or project name where spawns notebook nodes
+    #:
+    #: (required for: Openstack)
     cloud_project = Unicode(
-        config=True,
-        help=''
+        config=True
     )
+    #: Module where libcloudspawner can find a jinja2 template folder for
+    #: userdata script which pass to cloud-init
     userdata_template_module = Unicode(
         'libcloudspawner',
-        config=True,
-        help='''Module where libcloudspawner can find a jinja2 template folder for 
-        userdata script
-        '''
+        config=True
     )
+    #: Template name for cloud-init userdata script
     userdata_template_name = Unicode(
         'userdata.sh.j2',
-        config=True,
-        help='''Template name for userdata script'''
+        config=True
     )
+    #: List of tuple for nodes flavors like
+    #:
+    #: >>>  [('Simple machine', 's0-small'),
+    #: >>>   ('Mouhahaha machine','h4-bigmem')]
+    #:
+    #: (required for Openstack)
     machine_sizes = List(
         [],
         config=True,
-        help=''
     )
+    #: Region where deploy nodes
+    #:
+    #: (required for Openstack)
     cloud_region = Unicode(
         'RegionOne',
-        config=True,
-        help=''
+        config=True
     )
+    #: List of tuple for nodes images (templates)
+    #:
+    #: >>> [('Python jupyterhub', 'python-jupyter'),
+    #: >>>  ('Jupyterlab beta','try-lab')]
+    #:
+    #: (required for Openstack)'
     machine_images = List(
         [],
-        config=True,
-        help=''
+        config=True
     )
+    #: Network name where connect nodes
+    #:
+    #: (required for Openstack)
     machine_net = Unicode(
-        config=True,
-        help=''
+        config=True
     )
+    #: Cloud node identifier
     machineid = Unicode(
-        "",
-        help=''
+        ""
     )
+    #: NOT IMPLEMENTED (force username on remote machine, instead of auth user)
+    #:
+    #: ..todo: Used of forceuser inside cloud-init template
     forceuser = Unicode(
         "",
-        config=True,
-        help='Use this user instead of auth user'
+        config=True
     )
+    #: Notebook args to pass on nodes
     notebookargs = Unicode(
         "",
-        config=True,
-        help='notebookargs'
+        config=True
     )
+    #: Libcloud Parameters, see managers documentations for details
     libcloudparams = Dict(
         {},
         config=True,
         help='LibCloud cloud Configuration'
-    ) 
+    )
+    #: To retrieve some metrics (like spawn time...) via statsd
+    #: Statsd dict params host, port and prefix. See StatsClient for more options
     statsdparams = Dict(
         {},
-        config=True,
-        help='Statsd dict params host, port and prefix. See StatsClient for more options.'
+        config=True
         )
 
     def __init__(self, **kwargs):
@@ -148,7 +175,9 @@ class LibcloudSpawner(Spawner):
         return options
 
     def get_args(self):
-        """Return arguments to pass to the notebook server"""
+        """
+            Return arguments to pass to the notebook server
+        """
         argv = super().get_args()
         if self.user_options.get('argv'):
             argv.extend(self.user_options['argv'])
@@ -161,13 +190,17 @@ class LibcloudSpawner(Spawner):
         return env
 
     def load_state(self, state):
-        """load machineid from state"""
+        """
+            Load machineid from state
+        """
         super(LibcloudSpawner, self).load_state(state)
         self.machineid=state.get('machineid')
         pass
 
     def get_state(self):
-        """add machineid to state"""
+        """
+            Add machineid to state
+        """
         state = super(LibcloudSpawner, self).get_state()
         if self.machineid:
             state['machineid'] = self.machineid
@@ -175,7 +208,9 @@ class LibcloudSpawner(Spawner):
 
     @gen.coroutine
     def start(self):
-        """Start notebook"""
+        """
+            Start notebook node and poll machine until timeout
+        """
 
         api_token = self.get_env()["JPY_API_TOKEN"]
         self.nodemanager.create_machine(api_token)
@@ -200,7 +235,9 @@ class LibcloudSpawner(Spawner):
 
     @gen.coroutine
     def poll(self):
-        """Poll the process"""
+        """
+            Poll the process
+        """
         return self.nodemanager.get_node_status()
 
     @gen.coroutine
