@@ -1,0 +1,13 @@
+<label for="args"> Notebook type </label>
+<select name="machineimage">
+	{% for image in machine_images %}
+		<option value="{{ image[1] }}"> {{ image[0] }} </option>
+	{% endfor %}
+</select>
+
+<label for=\"args\"> Ressources </label>
+<select name="machinesize">
+	{% for size in machine_sizes %}
+		<option value="{{ size[1] }}"> {{ size[0] }} </option>
+	{% endfor %}
+</select>

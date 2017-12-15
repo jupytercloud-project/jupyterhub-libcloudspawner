@@ -177,7 +177,7 @@ class NodeManager(object):
                     return 1
         return 1
 
-    def create_machine(self, jhub_env):
+    def create_machine(self, jhub_env, user_options_from_form):
         """
             Create a machine, return nothing
         """
@@ -204,7 +204,8 @@ class NodeManager(object):
                    baseurl=self.spawner_conf.user.server.base_url,
                    hubprefix=self.spawner_conf.hub.server.base_url,
                    apiurl=self.spawner_conf.hub.api_url,
-                   notebookargs=self.spawner_conf.notebookargs)
+                   notebookargs=self.spawner_conf.notebookargs,
+                   user_options_from_form=user_options_from_form)
 
         node_conf = {}
 

@@ -19,6 +19,7 @@ from jupyterhub.spawner import Spawner
 from traitlets import (
     Instance, Integer, Unicode, List, Bool, Dict
 )
+import jinja2
 
 from libcloudspawner.manager.nodemanager import NodeManager
 from statsd import StatsClient
@@ -140,6 +141,9 @@ class LibcloudSpawner(Spawner):
 
         self.nodemanager = NodeManager(self,
                                        logguer=self.log)
+
+        self.user_options_from_form = None
+
         if self.user.state:
             self.load_state(self.user.state)
             self.nodemanager.retrieve_node(self.user.state['machineid'])
@@ -148,30 +152,37 @@ class LibcloudSpawner(Spawner):
         """ These options are set by final user in an HTML form
             Users choices are passed to spawner in self.user_options
         """
-        formhtml = []
-        formhtml.append("<label for=\"args\"> Notebook type </label>")
-        formhtml.append("<select name=\"image\">")
-        for size in self.machine_images:
-            option = "<option value=\"%s\"> %s </option>" % (size[1], size[0])
-            formhtml.append(option)
-        formhtml.append("</select>")
-        formhtml.append("<label for=\"args\"> Ressources </label>")
-        formhtml.append("<select name=\"size\">")
-        for size in self.machine_sizes:
-            option = "<option value=\"%s\"> %s </option>" % (size[1], size[0])
-            formhtml.append(option)
-        formhtml.append("</select>")
-        return(" ".join(formhtml))
+
+        env = jinja2.Environment(loader = jinja2.PackageLoader(
+            self.userdata_template_module, 'data'))
+
+        options_form_template = env.get_template("options_form.html.j2")
+
+        options_form_html = options_form_template.render(
+            machine_images=self.machine_images,
+            machine_sizes=self.machine_sizes)
+
+        return(options_form_html)
 
     def options_from_form(self, formdata):
-        options = {}
+        """ Receive data from options_form
+        Spawner need machinesize and machineimage
+
+        Other options are stored in self.user_options_from_form for hacking
+        ( ie : use theses customs options inside usedata template ) 
+        """
+        # These options are important for spawner
+        options = {} 
         options['machinesize'] = ""
         options['machineimage'] = ""
-
-        machineimage = formdata.get('image', "")[0]
-        machinesize = formdata.get('size', "")[0]
+        machineimage = formdata.get('machineimage', "")[0]
+        machinesize = formdata.get('machinesize', "")[0]
         options['machineimage'] = machineimage
         options['machinesize'] = machinesize
+
+        # Store formdata for customs usages
+        self.user_options_from_form = formdata
+
         return options
 
     def get_args(self):
@@ -197,7 +208,7 @@ class LibcloudSpawner(Spawner):
         super(LibcloudSpawner, self).load_state(state)
 
         if state:
-            self.machineid=state.get('machineid')
+            self.machineid = state.get('machineid')
         pass
 
     def get_state(self):
@@ -214,17 +225,15 @@ class LibcloudSpawner(Spawner):
         """
             Start notebook node and poll machine until timeout
         """
-
-        #api_token = self.get_env()["JPY_API_TOKEN"]
         jhub_env = {}
-
         # Keeping only env related to Jupyter (exclude PATH, LANG...)
         for key, value in self.get_env().items():
             if ("JUPYTER" in key) or ("JPY" in key):
                 jhub_env[key]=value
 
         # Node creation
-        self.nodemanager.create_machine(jhub_env)
+        self.nodemanager.create_machine(jhub_env,
+                                        self.user_options_from_form)
 
         for i in range(self.start_timeout):
             status = yield self.poll()
@@ -241,7 +250,9 @@ class LibcloudSpawner(Spawner):
                 return(self.user.server.ip, self.user.server.port)
             else:
                 yield gen.sleep(1)
-        # Timeout start failed... 
+        # Timeout start failed...
+        self.log.debug("Spawn Timeout, deleting Cloud instance %s ")
+        self.nodemanager.destroy_node()
         return None
 
     @gen.coroutine
