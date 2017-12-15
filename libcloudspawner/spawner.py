@@ -194,7 +194,9 @@ class LibcloudSpawner(Spawner):
             Load machineid from state
         """
         super(LibcloudSpawner, self).load_state(state)
-        self.machineid=state.get('machineid')
+
+        if state:
+            self.machineid=state.get('machineid')
         pass
 
     def get_state(self):
