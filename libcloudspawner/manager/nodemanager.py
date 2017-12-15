@@ -20,6 +20,7 @@ import jinja2
 
 from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
+import libcloud.security
 
 from .errors import NetworkNotFoundError, ImageNotFoundError, SizeNotFoundError
 
@@ -32,6 +33,9 @@ class NodeManager(object):
     def __init__(self, spawner_conf, logguer):
 
         cls = self._get_provider()
+
+        if 'verify_ssl_cert' in spawner_conf.libcloudparams.keys():
+            libcloud.security.VERIFY_SSL_CERT = spawner_conf.libcloudparams['verify_ssl_cert']
 
         # Note : spawner_conf.libcloudparams can't be used as full **kwargs
         # because libcloud.compute.drivers.OpenStackNodeDriver should receive
