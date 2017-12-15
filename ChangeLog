@@ -1,6 +1,7 @@
 CHANGES
 =======
 
+* First support for 0.8.1 Jupyterhub
 * Manage None state at startup
 * Documentation in progress..
 * Coroutine now work like a charm

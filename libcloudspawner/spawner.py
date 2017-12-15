@@ -216,7 +216,14 @@ class LibcloudSpawner(Spawner):
         """
 
         #api_token = self.get_env()["JPY_API_TOKEN"]
-        jhub_env = self.get_env()
+        jhub_env = {}
+
+        # Keeping only env related to Jupyter (exclude PATH, LANG...)
+        for key, value in self.get_env().items():
+            if ("JUPYTER" in key) or ("JPY" in key):
+                jhub_env[key]=value
+
+        # Node creation
         self.nodemanager.create_machine(jhub_env)
 
         for i in range(self.start_timeout):
