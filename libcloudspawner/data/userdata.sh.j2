@@ -14,7 +14,7 @@ Description=JupyterHub-singleuser instance
  
 [Service]
 User={{ user }}
-Environment=JPY_API_TOKEN={{ apitoken }}
+Environment=JPY_API_TOKEN={{ apitoken }} JUPYTERHUB_CLIENT_ID={{ jhub_env["JUPYTERHUB_CLIENT_ID"] }}
 ExecStart=/usr/local/bin/jupyterhub-singleuser --port=8000 --ip=0.0.0.0 --user={{ user }} --cookie-name={{ cookiename }} --base-url={{ baseurl }} --hub-prefix={{ hubprefix }} --hub-api-url={{ apiurl }}  {{ notebookargs }} \$@
 [Install]
 WantedBy=multi-user.target

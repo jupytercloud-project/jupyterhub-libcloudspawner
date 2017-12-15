@@ -177,7 +177,7 @@ class NodeManager(object):
                     return 1
         return 1
 
-    def create_machine(self, api_token):
+    def create_machine(self, jhub_env):
         """
             Create a machine, return nothing
         """
@@ -197,7 +197,8 @@ class NodeManager(object):
                                 self.spawner_conf.userdata_template_name)
 
         userdata = userdata_template.render(
-                   apitoken=str(api_token),
+                   apitoken=str(jhub_env['JPY_API_TOKEN']),
+                   jhub_env=jhub_env,
                    user=username,
                    cookiename=self.spawner_conf.user.server.cookie_name,
                    baseurl=self.spawner_conf.user.server.base_url,

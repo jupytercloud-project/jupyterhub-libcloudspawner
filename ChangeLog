@@ -1,6 +1,8 @@
 CHANGES
 =======
 
+* Manage None state at startup
+* Documentation in progress..
 * Coroutine now work like a charm
 * Start working on non-blocking version.(coroutine)
 * Introducing statsd options to graph error and spawn delay

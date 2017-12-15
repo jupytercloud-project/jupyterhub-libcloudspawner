@@ -187,6 +187,7 @@ class LibcloudSpawner(Spawner):
         env = super().get_env()
         if self.user_options.get('env'):
             env.update(self.user_options['env'])
+            print(env)
         return env
 
     def load_state(self, state):
@@ -214,8 +215,9 @@ class LibcloudSpawner(Spawner):
             Start notebook node and poll machine until timeout
         """
 
-        api_token = self.get_env()["JPY_API_TOKEN"]
-        self.nodemanager.create_machine(api_token)
+        #api_token = self.get_env()["JPY_API_TOKEN"]
+        jhub_env = self.get_env()
+        self.nodemanager.create_machine(jhub_env)
 
         for i in range(self.start_timeout):
             status = yield self.poll()
