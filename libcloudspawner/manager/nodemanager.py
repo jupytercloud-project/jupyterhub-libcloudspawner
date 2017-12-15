@@ -197,13 +197,8 @@ class NodeManager(object):
                                 self.spawner_conf.userdata_template_name)
 
         userdata = userdata_template.render(
-                   apitoken=str(jhub_env['JPY_API_TOKEN']),
                    jhub_env=jhub_env,
                    user=username,
-                   cookiename=self.spawner_conf.user.server.cookie_name,
-                   baseurl=self.spawner_conf.user.server.base_url,
-                   hubprefix=self.spawner_conf.hub.server.base_url,
-                   apiurl=self.spawner_conf.hub.api_url,
                    notebookargs=self.spawner_conf.notebookargs,
                    user_options_from_form=user_options_from_form)
 
