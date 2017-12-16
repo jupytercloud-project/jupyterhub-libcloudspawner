@@ -12,6 +12,17 @@ __maintainer__ = "Tristan Le Toullec"
 __email__ = "tristan.letoullec@cnrs.fr"
 
 
+class MissingConfigError(Exception):
+    """ This exception was raised in case mandatory configuration \
+    options missing
+    """
+
+    def __init__(self, config):
+        self.message="LibCloudSpawner configuration problem for %s" % config
+
+    def __str__(self):
+        return str(self.message)
+
 class ImageNotFoundError(Exception):
     """ This exception was raised in case requested image \
     was not found by cloud driver

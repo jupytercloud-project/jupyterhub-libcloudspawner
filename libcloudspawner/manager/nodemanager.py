@@ -22,7 +22,7 @@ from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
 import libcloud.security
 
-from .errors import NetworkNotFoundError, ImageNotFoundError, SizeNotFoundError
+from .errors import NetworkNotFoundError, ImageNotFoundError, SizeNotFoundError, MissingConfigError
 
 
 class NodeManager(object):
@@ -31,7 +31,14 @@ class NodeManager(object):
     """
 
     def __init__(self, spawner_conf, logguer):
+        
+        self.logguer = logguer
+        self.spawner_conf = spawner_conf
 
+        # Check cloud configuration 
+        self._check_config()
+
+        # Get LibCloud provider driver 
         cls = self._get_provider()
 
         if 'verify_ssl_cert' in spawner_conf.libcloudparams.keys():
@@ -44,12 +51,25 @@ class NodeManager(object):
                           spawner_conf.libcloudparams['arg_key'],
                           **spawner_conf.libcloudparams)
 
-        self.logguer = logguer
-        self.spawner_conf = spawner_conf
+        
         self.node = None
         self.node_ip = None
         # TODO this parameter should be set by spawner_conf
         self.node_port = 8000
+
+    def _check_config(self):
+        """
+        Run configuration checks, raise exception if mandatory options is missing
+        Log information if some configurations strange
+        """
+        if not 'arg_user_id' in self.spawner_conf.libcloudparams.keys():
+            raise MissingConfigError("libcloudparams[\'arg_user_id\']")
+
+        if len(self.spawner_conf.machine_images) < 1:
+            raise MissingConfigError("machine_images")
+
+        if len(self.spawner_conf.machine_sizes) < 1:
+            raise MissingConfigError("machine_sizes")
 
     def _get_provider(self):
         return get_driver(Provider.OPENSTACK)
