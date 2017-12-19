@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+* Example userdata to start singleuser cloudimage
+* Starting to check cloud configurations
+* Support non-ssl cloud
+* Cleaning code
+* Options form (size/image user selection) now jinja2
 * Userdata scripts improvements
 * First support for 0.8.1 Jupyterhub
 * Manage None state at startup

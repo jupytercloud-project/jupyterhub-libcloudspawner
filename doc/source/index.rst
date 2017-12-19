@@ -12,6 +12,7 @@ Welcome to libcloudspawner's documentation!
 
    about
    install
+   custom
 
    api/modules
 
