@@ -39,7 +39,7 @@ For instance, in this case, the cloud provider is an OpenStack cloud. Login and 
 
 **cloud_userpassword** : Cloud user password
 
->>> c.LibcloudSpawner.cloud_userpassword = "sha1ooYeivai2oohaux8"
+>>> c.LibcloudSpawner.cloud_userpassword = "gloubiboulga"
 
 **cloud_project** : Project/tenant which own notebook instances 
 

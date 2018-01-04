@@ -3,6 +3,7 @@
 
 """ nodemanager.py : jupyter-libcloudSpawner manager for notebook instance (node) 
 """
+import libcloudspawner
 __author__ = "Tristan Le Toullec"
 __copyright__ = "Copyright 2017, LOPS"
 __credits__ = ["Tristan Le Toullec"]
@@ -212,13 +213,30 @@ class NodeManager(object):
         else:
             username = self.spawner_conf.user.name
 
-        env = jinja2.Environment(
-                          loader=jinja2.PackageLoader(
-                                self.spawner_conf.userdata_template_module,
-                                'data'))
-
-        userdata_template = env.get_template(
-                                self.spawner_conf.userdata_template_name)
+        # Trying to setup Jinja environment with default builtin module
+        # or custom module
+        # conf : spawner_conf.userdata_template_module
+        # If failed, come back to libcloudspawner default
+        try:
+            env = jinja2.Environment(
+                loader=jinja2.PackageLoader(
+                self.spawner_conf.userdata_template_module,
+                'data'))
+        except:
+            self.logguer.info('Failed to load custom data module, come back to failover')
+            env = jinja2.Environment(
+                loader=jinja2.PackageLoader(
+                "libcloudspawner",
+                'data'))
+        try:
+            userdata_template = env.get_template(
+                self.spawner_conf.userdata_template_name)
+        except:
+            env = jinja2.Environment(
+                loader=jinja2.PackageLoader(
+                libcloudspawner,
+                'data'))
+            userdata_template = env.get_template()
 
         userdata = userdata_template.render(
                    jhub_env=jhub_env,
