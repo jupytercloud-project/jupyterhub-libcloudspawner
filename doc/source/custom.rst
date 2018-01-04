@@ -1,18 +1,18 @@
 Customize instance
 ==================
 
-Here some informations about tunning and tweaking libcloudspawner. 
+Here is some information about tuning and tweaking libcloudspawner. 
 
-Best (in term of spawn time) is to customize instances images used by JupyterHub. But certain operations must be execute at instanciation time bu userdata script. 
+The best way (in terms of spawn time) is to customize instances images used by JupyterHub. But some operations must be executed at instantiation time by a userdata script. 
 
-Note that you can use vendor generics cloud images but JupyterHub requirements should be installs at instance startup. For final users, startup should take a while (depending on your cloud provider).  
+Note that you can use generic vendors cloud images but JupyterHub requirements should be installed at the start of the instance. For end users, startup should take some time (depending on your cloud provider).  
 
 Provide a custom userdata script
 --------------------------------
 
-Userdata scripts configure instance at first boot to configure and launch notebooks.
+Userdata scripts configure instance at first startup to customize and launch notebooks.
 
-LibcloudSpawner search Jinja2 template of userdata script inside a Python module.
+LibcloudSpawner searches for a Jinja2 template of userdata script inside a Python module.
 
 LibcloudSpawner will search templates inside **data** folder of the module designed by **spawner_conf.userdata_template_module** configuration.  
 
@@ -20,7 +20,7 @@ This module should be in JupyterHub's Python PYTHONPATH.
 
 >>> c.spawner_conf.userdata_template_module = 'acmejhubcustoms'
 
-Inside this **data** folder, LibcloudSpawner search for template designed by **spawner_conf.userdata_template_name**.
+Inside this **data** folder, LibcloudSpawner searches for a template designed by **spawner_conf.userdata_template_name**.
 
 >>> c.spawner_conf.userdata_template_name = 'acme-userdata.yaml.j2'
 
@@ -37,14 +37,14 @@ Create your module
 Create your first userdata Jinja2 template
 ++++++++++++++++++++++++++++++++++++++++++
 
-Your template will receive some informations from LibcloudSpawner :
- - jhub_env (dict) : Environnements variables from JupyterHub 
+Your template will receive some information from LibcloudSpawner :
+ - jhub_env (dict) : Variable environments from JupyterHub 
  - user (string) : Authenticated user name
- - notebookargs (string) : from JupyterHub configuration
- - user_options_from_form (dict) : Selected options from final user
+ - notebookargs (string) : From JupyterHub configuration
+ - user_options_from_form (dict) : Selected options by end user
  
-This simplest userdata template we can write ( name : _acmejhubcustoms/data/jhub.sh.j2_ )
-(implies JupyterHub was already installed on template image and authenticated user exist on instance)
+This is the simplest userdata template we can write ( name : _acmejhubcustoms/data/jhub.sh.j2_ )
+(implies JupyterHub is already installed on the template image and that an authenticated user exists in the instance)
 
 .. code-block:: bash
 

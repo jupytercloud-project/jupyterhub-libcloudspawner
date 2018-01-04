@@ -1,12 +1,12 @@
 Installation & usage
 ====================
 
-This documentation explain how to use LibcloudSpawner with Jupyter Hub. In this example, we used OpenStack cloud manager, which is, at this time, the only supported Manager.
+This documentation explains how to use LibcloudSpawner with Jupyter Hub. In this example, we used OpenStack cloud manager, which is currently the only supported manager.
 
 Installation 
 ------------
 
-Since JupyterHub LibCloudSpawner wasn't publish on Pypi you must pip it directly from Github.
+Since JupyterHub LibCloudSpawner has not been published on Pypi, you must pip it directly from Github.
 
 >>> pip install apache-libcloud
 >>> pip install Jinja2
@@ -15,25 +15,25 @@ Since JupyterHub LibCloudSpawner wasn't publish on Pypi you must pip it directly
 Spawner configuration
 ---------------------
 
-First, configure LibcloudSpawner as your spawner in Jupyterhub configuration file.
+First, configure LibcloudSpawner as your spawner in the Jupyterhub configuration file.
 
 >>> c.JupyterHub.spawner_class = 'libcloudspawner.spawner.LibcloudSpawner'
 
 Cloud configuration
 -------------------
 
-LibcloudSpawner will create, poll and destroy instance. It need some informations depending to your cloud provider. See examples, nodemanagers API documentation or LibCloud documentation (https://libcloud.readthedocs.io/en/latest/compute/drivers/openstack.html). 
+LibcloudSpawner will create, poll and destroy instance. It needs some information depending on your cloud provider. See examples, nodemanagers API documentation or LibCloud documentation (https://libcloud.readthedocs.io/en/latest/compute/drivers/openstack.html). 
 
 Cloud parameters
 ++++++++++++++++
 
-For instance, in this case, the cloud provider is an OpenStack cloud. Login and password of the user which manage instance are lops-jupyter and gloubiboulga. Authentication handshake used Keystone v3 method and domain name is 'default'. Instances will be create in RegionOne.  
+For instances, in this case, the cloud provider is OpenStack. User login and password which manage the instance are lops-jupyter and gloubiboulga. Authentication handshake uses Keystone v3 method and domain name is 'default'. Instances will be created in RegionOne.  
 
-**cloud_url** : Endpoint where connect to cloud provider
+**cloud_url** : Endpoint to connect to the cloud provider
 
 >>> c.LibcloudSpawner.cloud_url = "https://noocloud.univ-brest.fr/keystone/v3/auth/tokens"
 
-**cloud_user** : Cloud user which create and destroy instances 
+**cloud_user** : Cloud user who creates and destroys instances 
 
 >>> c.LibcloudSpawner.cloud_user = "lops-jupyter"
 
@@ -41,12 +41,12 @@ For instance, in this case, the cloud provider is an OpenStack cloud. Login and 
 
 >>> c.LibcloudSpawner.cloud_userpassword = "secret"
 
-**cloud_project** : Project/tenant which own notebook instances 
+**cloud_project** : Project/tenant which owns notebook instances 
 
 >>> c.LibcloudSpawner.cloud_project = "noo-lops-jupyter"
 
 
-**libcloudparams** : Libcloud customs parameters 
+**libcloudparams** : Libcloud custom parameters 
 
 >>> c.LibcloudSpawner.libcloudparams = {"arg_user_id": "lops-jupyter",
 >>>                                    "arg_key": "secret",
@@ -60,11 +60,11 @@ For instance, in this case, the cloud provider is an OpenStack cloud. Login and 
 Cloud Network
 +++++++++++++
 
-JupyterHub server and JupyterNotebooks nodes will communicate on port 8000. Real users will not have any contact directly with cloud instances. In Access Groups or firewall, be sure JupyterHub server access nodes on port 8000. 
+JupyterHub server and JupyterNotebook nodes will communicate on port 8000. Real users will not have any direct contact with cloud instances. In Access Groups or firewall, be sure JupyterHub server has access to nodes on port 8000. 
 
-Common case is to configure your JupyterHub and JupyterNotebooks nodes on the same private network, and associate flotting IP address to Hub. 
+Common case is to configure your JupyterHub and JupyterNotebook nodes on the same private network, and associate floating IP address to the Hub. 
 
-**machine_net** : Name of network where to connect instance port.
+**machine_net** : Network name where to connect the instance port.
 
 >>> c.LibcloudSpawner.machine_net = "noo-net-33"
 
@@ -79,9 +79,9 @@ Region
 Instance sizes (flavors)
 ------------------------
 
-LibCloudSpawner allow JupyterHub administrator to propose different Notebook size (aka instance flavor) to final user. 
+LibCloudSpawner allows JupyterHub administrator to offer different Notebook sizes (aka instance flavor) to the end user. 
 
-**machine_sizes** : List of tuples like ("Display name", "cloud flavor name"). This list was presented to users at spawner form. 
+**machine_sizes** : List of tuples like ("Display name", "cloud flavor name"). This list is presented to users as a form before the spawn. 
 
 >>> c.LibcloudSpawner.machine_sizes = [("1vcpu 2Go RAM", "m1.small"),
 >>>                                    ("4vcpu 64Go RAM", "4c.extramem"),]
@@ -89,20 +89,20 @@ LibCloudSpawner allow JupyterHub administrator to propose different Notebook siz
 Instance images (templates)
 ---------------------------
 
-LibCloudSpawner allow JupyterHub administrator to propose different Notebook images to final user.
+LibCloudSpawner allows JupyterHub administrator to offer different Notebook images to the end user.
 
-For instance, administrator can provision cloud project with one image dedicated to R language and one else dedicated to Python.
+For example, administrator can provide a cloud project with an image dedicated to R language and another one dedicated to Python.
 
-**machine_images** : List of tuples like ("Display name", "cloud template name"). This list was presented to users at spawner form.
+**machine_images** : List of tuples like ("Display name", "cloud template name"). This list is presented to users as a form before the spawn. 
 
 >>> c.LibcloudSpawner.machine_images = [("Default image","noo33u16-station-jpy-python")]
 
 Instance images requirements
 ++++++++++++++++++++++++++++
 
-LibcloudSpawner will use cloud-init scripts to configure and launch jupyterhub-singleuser notebooks inside virtual machine. For instance, script can install system requirements, like jupyterhub and insert a systemd unit which configure and start Jupyter User Notebook.
+LibcloudSpawner will use cloud-init scripts to configure and launch jupyterhub-singleuser notebooks inside virtual machine. For instance, script can install system requirements, such as jupyterhub and insert a systemd unit that configures and starts Jupyter User Notebook.
 
-Note that cloud-init can also setup JupyterNotebook dependencies (Jupyter, ipython...), but this make spawn time longer.
+Note that cloud-init can also setup JupyterNotebook dependencies (Jupyter, ipython...), but this lengthens the spawning time.
 
 Default userdata script can be used with Ubuntu cloudimage Xenial 16.04 and Debian cloud image.
 
@@ -116,12 +116,12 @@ Default script will :
 
 This userdata script is provided as an example and should be adapted to your case.
 
-Please see customize section to adapt libcloudspawner like in your secrets wish. 
+Please see customize section to adapt libcloudspawner as in your secret wishes. 
 
 Metrology
 ---------
 
-**statsdparams** : if you wish have some metrics about usage
+**statsdparams** : if you wish to have some metrics about usage.
 
 >>> c.LibcloudSpawner.statsdparams = {"host": "statds.server.com",
 >>>                                   "port": 8125,
