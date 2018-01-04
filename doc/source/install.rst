@@ -39,7 +39,7 @@ For instance, in this case, the cloud provider is an OpenStack cloud. Login and 
 
 **cloud_userpassword** : Cloud user password
 
->>> c.LibcloudSpawner.cloud_userpassword = "gloubiboulga"
+>>> c.LibcloudSpawner.cloud_userpassword = "secret"
 
 **cloud_project** : Project/tenant which own notebook instances 
 
@@ -49,7 +49,7 @@ For instance, in this case, the cloud provider is an OpenStack cloud. Login and 
 **libcloudparams** : Libcloud customs parameters 
 
 >>> c.LibcloudSpawner.libcloudparams = {"arg_user_id": "lops-jupyter",
->>>                                    "arg_key": "gloubiboulga",
+>>>                                    "arg_key": "secret",
 >>>                                    "ex_force_auth_version": "3.x_password",
 >>>                                    "ex_force_auth_url": "https://openstack.server.com/keystone/v3/auth/tokens",
 >>>                                    "ex_force_service_region": "RegionOne",
