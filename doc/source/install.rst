@@ -37,6 +37,7 @@ For instances, in this case, the cloud provider is OpenStack. User login and pas
 
 >>> c.LibcloudSpawner.cloud_user = "lops-jupyter"
 
+
 **cloud_userpassword** : Cloud user password
 
 >>> c.LibcloudSpawner.cloud_userpassword = "secret"
