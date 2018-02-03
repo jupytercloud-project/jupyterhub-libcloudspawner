@@ -1,0 +1,46 @@
+#cloud-config
+# This userdata config is an exemple of userdata which 
+# create the user
+# install some requirements on a vanilla Ubuntu cloud image
+# install jupyterhub-singleuser systemd unit  
+#
+
+
+packages:
+ - python3-pip
+ - python3-numpy
+ - python3-matplotlib
+
+# User creation
+users:
+ - default
+ - name: {{ user }}
+   gecos: Singleuser {{ user }} 
+
+# Systemd Unit creation
+write_files:
+ - content: |
+{% for key, value in jhub_env.items() %}
+{{"    " + key}}={{ value }}
+{% endfor %}
+   path: /etc/default/jupyter
+ - content: |
+    [Unit]
+    Description=JupyterHub-singleuser instance
+    
+    [Service]
+    User={{ user }}
+    EnvironmentFile=/etc/default/jupyter
+    ExecStart=/usr/local/bin/jupyterhub-singleuser --port=8000 --ip=0.0.0.0 {{ notebookargs }} $@
+    [Install]
+    WantedBy=multi-user.target
+   path: /etc/systemd/system/jupyterhub-singleuser.service
+
+# Reload systemd commands
+# Start and enable service
+runcmd:
+  - [ pip3, install, jupyter ]
+  - [ pip3, install, jupyterhub ]
+  - [ systemctl, daemon-reload ]
+  - [ systemctl, enable, jupyterhub-singleuser.service ]
+  - [ systemctl, start, jupyterhub-singleuser.service ]
