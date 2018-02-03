@@ -1,6 +1,15 @@
 CHANGES
 =======
 
+* Update example configuration
+* Added github README.rst to point documentation
+* New default instance customization script cloud-init
+* Doc correction for custom templates
+* Admin password issue TG-2 #closed
+* Doc spell checking (#1)
+* Fixe issue #2
+* There is nothing to see here #2 FIX
+* Documentation in progress..
 * Example userdata to start singleuser cloudimage
 * Starting to check cloud configurations
 * Support non-ssl cloud
