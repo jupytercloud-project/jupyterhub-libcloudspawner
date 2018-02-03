@@ -1,5 +1,5 @@
-Customize instance
-==================
+Customize libcloudSpawner
+=========================
 
 Here is some information about tuning and tweaking libcloudspawner. 
 
@@ -30,6 +30,8 @@ Create your module
 >>> mkdir acmejhubcustoms
 >>> touch acmejhubcustoms/__init__.py
 >>> mkdir acmejhubcustoms/data
+
+You should copy LibcloudSpawner default templates to this folder https://github.com/tristanlt/jupyter-libcloudspawner/tree/master/libcloudspawner/data
 
 .. note:
 	Keep this module inside JupyterHub path. 
