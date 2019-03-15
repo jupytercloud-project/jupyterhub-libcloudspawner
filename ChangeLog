@@ -1,6 +1,11 @@
 CHANGES
 =======
 
+* Release 1.2
+
+1.2
+---
+
 * Update example configuration
 * Added github README.rst to point documentation
 * New default instance customization script cloud-init
