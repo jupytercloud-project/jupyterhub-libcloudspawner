@@ -1,6 +1,7 @@
 CHANGES
 =======
 
+* Add WorkingDirectory in singleuser systemd unit for Dask workdir
 * Release 1.2
 
 1.2
