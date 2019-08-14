@@ -1,6 +1,8 @@
 CHANGES
 =======
 
+* Documentation - note on 3.x\_password method usage
+* Small corrections on pbr packing management
 * Add WorkingDirectory in singleuser systemd unit for Dask workdir
 * Release 1.2
 
