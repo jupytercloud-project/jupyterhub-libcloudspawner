@@ -58,6 +58,13 @@ For instances, in this case, the cloud provider is OpenStack. User login and pas
 >>>                                    "ex_domain_name": "default",
 >>>                                    "ex_keyname": "tristanlt"}
 
+.. note::
+
+   Since Apache LibCloud use Keystone v2 password authentication as default, Keystone v3 users must set `ex_force_auth_version` parameter to `3.x_password`.
+   
+   In this case, please set also `ex_domain_name` to project domain.
+
+
 Cloud Network
 +++++++++++++
 
