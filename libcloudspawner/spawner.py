@@ -111,8 +111,9 @@ class LibcloudSpawner(Spawner):
         config=True
     )
     #: Notebook args to pass on nodes
+    #: DEPRECATED - Use c.Spawner.args instead (to be removed in 1.4)
     notebookargs = Unicode(
-        "",
+        "DEPRECATED - Use c.Spawner.args instead (to be removed in 1.4)",
         config=True
     )
     #: Libcloud Parameters, see managers documentations for details
