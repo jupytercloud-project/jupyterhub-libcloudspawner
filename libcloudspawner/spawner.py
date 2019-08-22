@@ -113,7 +113,7 @@ class LibcloudSpawner(Spawner):
     #: Notebook args to pass on nodes
     #: DEPRECATED - Use c.Spawner.args instead (to be removed in 1.4)
     notebookargs = Unicode(
-        "DEPRECATED - Use c.Spawner.args instead (to be removed in 1.4)",
+        "",
         config=True
     )
     #: Libcloud Parameters, see managers documentations for details
@@ -206,6 +206,8 @@ class LibcloudSpawner(Spawner):
         """
             Load machineid from state
         """
+        import pdb
+        pdb.set_trace()
         super(LibcloudSpawner, self).load_state(state)
 
         if state:
@@ -216,6 +218,9 @@ class LibcloudSpawner(Spawner):
         """
             Add machineid to state
         """
+        import pdb
+        pdb.set_trace()
+
         state = super(LibcloudSpawner, self).get_state()
         if self.machineid:
             state['machineid'] = self.machineid
