@@ -24,7 +24,7 @@ Description=JupyterHub-singleuser instance
 WorkingDirectory=/tmp
 User={{ user }}
 EnvironmentFile=/etc/default/jupyter
-ExecStart=${JHUB_SINGLEUSER} --port=8000 --ip=0.0.0.0 {{ notebookargs }} \$@
+ExecStart=${JHUB_SINGLEUSER} --ip=0.0.0.0 {{ notebookargs }} \$@
 [Install]
 WantedBy=multi-user.target
 EOF
