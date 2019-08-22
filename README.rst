@@ -1,7 +1,10 @@
 About LibCloudSpawner
 =====================
 
-[![Gitter](https://img.shields.io/gitter/room/jupyter-libcloudspawner/jupyter-libcloudspawner.svg?style=flat-square)](https://gitter.im/jupyter-libcloudspawner/community)
+|Chat on Gitter|
+
+.. |Chat on Gitter| image:: https://img.shields.io/badge/Chat%20on-Gitter-green.svg
+   :target: https://gitter.im/jupyter-libcloudspawner/community
 
 LibcloudSpawner is a JupyterHub Spawner that allows JupyterHub to launch users notebooks inside cloud instance. One instance, one user.
 
