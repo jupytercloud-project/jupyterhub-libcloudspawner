@@ -231,9 +231,22 @@ class LibcloudSpawner(Spawner):
             if ("JUPYTER" in key) or ("JPY" in key):
                 jhub_env[key]=value
 
+        # Retrieve args to provide to Jupyter
+        notebook_args = self.get_args()
+
+        # Server port
+        # 0 : random
+        # != 0 : set by configuration
+        if self.port == 0:
+            server_port = self.server.port
+        else:
+            server_port = self.port
+
         # Node creation
         self.nodemanager.create_machine(jhub_env,
-                                        self.user_options_from_form)
+                                        notebook_args,
+                                        self.user_options_from_form,
+                                        server_port)
 
         for i in range(self.start_timeout):
             status = yield self.poll()

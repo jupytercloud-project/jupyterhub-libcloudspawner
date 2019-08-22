@@ -32,14 +32,14 @@ class NodeManager(object):
     """
 
     def __init__(self, spawner_conf, logguer):
-        
+
         self.logguer = logguer
         self.spawner_conf = spawner_conf
 
-        # Check cloud configuration 
+        # Check cloud configuration
         self._check_config()
 
-        # Get LibCloud provider driver 
+        # Get LibCloud provider driver
         cls = self._get_provider()
 
         if 'verify_ssl_cert' in spawner_conf.libcloudparams.keys():
@@ -52,11 +52,9 @@ class NodeManager(object):
                           spawner_conf.libcloudparams['arg_key'],
                           **spawner_conf.libcloudparams)
 
-        
         self.node = None
         self.node_ip = None
-        # TODO this parameter should be set by spawner_conf
-        self.node_port = 8000
+        self.node_port = None
 
     def _check_config(self):
         """
@@ -202,7 +200,7 @@ class NodeManager(object):
                     return 1
         return 1
 
-    def create_machine(self, jhub_env, user_options_from_form):
+    def create_machine(self, jhub_env, notebook_args, user_options_from_form, port):
         """
             Create a machine, return nothing
         """
@@ -212,6 +210,14 @@ class NodeManager(object):
             username = self.spawner_conf.forceuser
         else:
             username = self.spawner_conf.user.name
+
+        # Generate Jupyter Notebooks arg list
+        # From c.Spawner (list )
+        # and DEPRECATED c.LibcloudSpawner ( string )
+        argsflags = " ".join(notebook_args + [self.spawner_conf.notebookargs] )
+
+        # Set Server port 
+        self.node_port = port
 
         # Trying to setup Jinja environment with default builtin module
         # or custom module
@@ -241,7 +247,7 @@ class NodeManager(object):
         userdata = userdata_template.render(
                    jhub_env=jhub_env,
                    user=username,
-                   notebookargs=self.spawner_conf.notebookargs,
+                   notebookargs=argsflags,
                    user_options_from_form=user_options_from_form)
 
         node_conf = {}
