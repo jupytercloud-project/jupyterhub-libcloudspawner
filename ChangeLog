@@ -1,10 +1,11 @@
 CHANGES
 =======
 
+* Restoring state is supported, restarting JH is possible w/o users revolt
+* c.LibCloudSpawner.notebookargs deprecation, use c.Spawner.args
+* Remove static port definition on default cloud-init template
+* Support for c.Spawner configuration ( Fix #3 )
 * Documentation - note on 3.x\_password method usage
-* Small corrections on pbr packing management
-* Add WorkingDirectory in singleuser systemd unit for Dask workdir
-* Release 1.2
 
 1.2
 ---
