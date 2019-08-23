@@ -145,10 +145,6 @@ class LibcloudSpawner(Spawner):
 
         self.user_options_from_form = None
 
-        if self.user.state:
-            self.load_state(self.user.state)
-            self.nodemanager.retrieve_node(self.user.state['machineid'])
-
     def _options_form_default(self):
         """ These options are set by final user in an HTML form
             Users choices are passed to spawner in self.user_options
@@ -204,27 +200,45 @@ class LibcloudSpawner(Spawner):
 
     def load_state(self, state):
         """
-            Load machineid from state
+            Getting server ID and port from state
+            Try to recover single server access
         """
-        import pdb
-        pdb.set_trace()
         super(LibcloudSpawner, self).load_state(state)
 
-        if state:
-            self.machineid = state.get('machineid')
+        if not state:
+            pass
+
+        if 'machineid' in state.keys():
+            if 'serverport' in state.keys():
+                # Call NodeManager to search instance by instance ID
+                try:
+                    self.nodemanager.retrieve_node(state['machineid'])
+                except:
+                    self.log.info("Instance %s from state not found, clearing state." % state['machineid'])
+                    self.clear_state()
+                    return
+                self.nodemanager.node_port = state['serverport']
+                #self.machineid = state['machineid']
         pass
 
     def get_state(self):
         """
             Add machineid to state
+            machineid : Cloud instance id
+            serverport : Jupyter single notebook port
         """
-        import pdb
-        pdb.set_trace()
-
         state = super(LibcloudSpawner, self).get_state()
-        if self.machineid:
-            state['machineid'] = self.machineid
+        if self.nodemanager.node:
+            state['machineid'] = self.nodemanager.node.id
+            state['serverport'] = self.server.port
+            self.log.debug('SpawnerStateMgmt get_state storing : %s %s' % (state['machineid'],state['serverport']))
         return state
+
+    def clear_state(self):
+        """
+            Clear machine from states
+        """
+        super().clear_state()
 
     @gen.coroutine
     def start(self):

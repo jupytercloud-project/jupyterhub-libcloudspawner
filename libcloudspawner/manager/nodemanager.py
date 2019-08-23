@@ -155,11 +155,14 @@ class NodeManager(object):
         """
         Search for node with id on cloud (used in load_state after jupyter kill)
         """
+
         try:
             self.node = self.driver.ex_get_node_details(id)
         except:
             self.logguer.debug("Can not retrieve node information \
             from cloud provider")
+            return
+        self._update_node_net_informations()
 
     def get_node(self):
         """
@@ -178,6 +181,9 @@ class NodeManager(object):
             self.driver.destroy_node(self.node)
         except:
             print('Node destroy failed')
+        self.node = None
+        self.node_ip = None
+        self.node_port = None
 
     def get_node_status(self):
         """
