@@ -1,6 +1,7 @@
 CHANGES
 =======
 
+* libcloudSpawner is present on pypi
 * Restoring state is supported, restarting JH is possible w/o users revolt
 * c.LibCloudSpawner.notebookargs deprecation, use c.Spawner.args
 * Remove static port definition on default cloud-init template
