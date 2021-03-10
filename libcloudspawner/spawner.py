@@ -13,6 +13,7 @@ __email__ = "tristan.letoullec@cnrs.fr"
 
 import requests
 import time
+import asyncio
 
 from tornado import gen
 from jupyterhub.spawner import Spawner
@@ -129,6 +130,8 @@ class LibcloudSpawner(Spawner):
         config=True
         )
 
+    spawner_events = []
+
     def __init__(self, **kwargs):
         super(LibcloudSpawner, self).__init__(**kwargs)
 
@@ -239,6 +242,23 @@ class LibcloudSpawner(Spawner):
             Clear machine from states
         """
         super().clear_state()
+
+    async def progress(self):
+        """Async generator for progress events
+        Send event on :
+        * image, net and flavor requests
+        * node creation
+        * jhub port recheable
+        """
+        log_index = 0
+        while True:
+            events = self.nodemanager.node_events
+            
+            if log_index < (len(events) - 1):
+                log_index += 1
+                yield events[log_index]
+                
+            await asyncio.sleep(1)
 
     @gen.coroutine
     def start(self):

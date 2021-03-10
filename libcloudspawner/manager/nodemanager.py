@@ -56,6 +56,8 @@ class NodeManager(object):
         self.node_ip = None
         self.node_port = None
 
+        self.node_events = []
+
     def _check_config(self):
         """
         Run configuration checks, raise exception if mandatory options is missing
@@ -90,6 +92,8 @@ class NodeManager(object):
         for i in images:
             if i.name == imagename:
                 self.logguer.debug("Image found %s" % i.name)
+                self.node_events.append( { "progress": 5,
+                                           "message": "Cloud image found (%s)" % i.name })
                 return i
         # Image not found, raising an error
         raise ImageNotFoundError
@@ -103,6 +107,8 @@ class NodeManager(object):
             self.logguer.debug(n.name)
             if n.name == netname:
                 self.logguer.debug("Network found %s" % n.name)
+                self.node_events.append( { "progress": 15,
+                                           "message": "Cloud network found (%s)" % n.name })
                 return n
         # Network not found, raising an error
         raise NetworkNotFoundError
@@ -115,6 +121,8 @@ class NodeManager(object):
         for s in sizes:
             if s.name == sizename:
                 self.logguer.debug("Size found %s" % s.name)
+                self.node_events.append( { "progress": 10,
+                                           "message": "Cloud flavor found (%s)" % s.name })
                 return s
 
         # Size not found, raising an error 
@@ -193,6 +201,13 @@ class NodeManager(object):
         node = self.get_node()
         if node:
             if node.state == 'running':
+                
+                # Add an event to node_events (one time)
+                running_event = { "progress": 70,
+                                  "message": "Cloud node running" }
+                if not running_event in self.node_events:
+                    self.node_events.append(running_event)
+
                 # Node Ok, updating network informations
                 self._update_node_net_informations()
 
@@ -201,6 +216,8 @@ class NodeManager(object):
 
                 # Notebook ? Did you respond ?
                 if self._check_notebook_service():
+                    self.node_events.append( { "progress": 100,
+                                               "message": "JupyterHub single-user service running" })
                     return None
                 else:
                     return 1
@@ -270,6 +287,7 @@ class NodeManager(object):
         netname = self.spawner_conf.machine_net
         node_conf['networks'] = [self._get_network(netname)]
 
+
         # Generate nodename
         node_conf['name'] = self._generate_machine_name(
                                     self.spawner_conf.user.name)
@@ -280,5 +298,7 @@ class NodeManager(object):
             node_conf['ex_keyname'] = self.spawner_conf.libcloudparams['ex_keyname']
 
         # Create machine
+        self.node_events.append( { "progress": 40,
+                                   "message": "Cloud node building" })
         self.node = self.driver.create_node(**node_conf)
         self.logguer.debug("create_machine stop")
