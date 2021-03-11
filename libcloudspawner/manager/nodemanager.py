@@ -42,15 +42,15 @@ class NodeManager(object):
         # Get LibCloud provider driver
         cls = self._get_provider()
 
-        if 'verify_ssl_cert' in spawner_conf.libcloudparams.keys():
-            libcloud.security.VERIFY_SSL_CERT = spawner_conf.libcloudparams['verify_ssl_cert']
+        if 'verify_ssl_cert' in spawner_conf.libcloud_driver_params.keys():
+            libcloud.security.VERIFY_SSL_CERT = spawner_conf.libcloud_driver_params['verify_ssl_cert']
 
         # Note : spawner_conf.libcloudparams can't be used as full **kwargs
         # because libcloud.compute.drivers.OpenStackNodeDriver should receive
         # user_id and key as **args and everything else as **kwargs...
-        self.driver = cls(spawner_conf.libcloudparams['arg_user_id'],
-                          spawner_conf.libcloudparams['arg_key'],
-                          **spawner_conf.libcloudparams)
+        self.driver = cls(spawner_conf.libcloud_driver_params['arg_user_id'],
+                          spawner_conf.libcloud_driver_params['arg_key'],
+                          **spawner_conf.libcloud_driver_params)
 
         self.node = None
         self.node_ip = None
@@ -63,8 +63,8 @@ class NodeManager(object):
         Run configuration checks, raise exception if mandatory options is missing
         Log information if some configurations strange
         """
-        if not 'arg_user_id' in self.spawner_conf.libcloudparams.keys():
-            raise MissingConfigError("libcloudparams[\'arg_user_id\']")
+        if not 'arg_user_id' in self.spawner_conf.libcloud_driver_params.keys():
+            raise MissingConfigError("libcloud_driver_params[\'arg_user_id\']")
 
         if len(self.spawner_conf.machine_images) < 1:
             raise MissingConfigError("machine_images")
@@ -223,21 +223,17 @@ class NodeManager(object):
                     return 1
         return 1
 
-    def create_machine(self, jhub_env, notebook_args, user_options_from_form, port):
+    def create_machine(self, jhub_env, notebookargs, user_options_from_form, port):
         """
             Create a machine, return nothing
         """
         self.logguer.debug("create_machine start")
 
+        # Able to force unix user to 
         if self.spawner_conf.forceuser:
             username = self.spawner_conf.forceuser
         else:
             username = self.spawner_conf.user.name
-
-        # Generate Jupyter Notebooks arg list
-        # From c.Spawner (list )
-        # and DEPRECATED c.LibcloudSpawner ( string )
-        argsflags = " ".join(notebook_args + [self.spawner_conf.notebookargs] )
 
         # Set Server port 
         self.node_port = port
@@ -270,7 +266,7 @@ class NodeManager(object):
         userdata = userdata_template.render(
                    jhub_env=jhub_env,
                    user=username,
-                   notebookargs=argsflags,
+                   notebookargs=" ".join(notebookargs),
                    user_options_from_form=user_options_from_form)
 
         node_conf = {}

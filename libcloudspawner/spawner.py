@@ -23,51 +23,24 @@ from traitlets import (
 import jinja2
 
 from libcloudspawner.manager.nodemanager import NodeManager
-from statsd import StatsClient
 
 
 class LibcloudSpawner(Spawner):
-    """A Spawner that create notebook inside NooCloud."""
+    """A Spawner that create cloud instance for JupyterHub single-user server (machine)."""
 
-    #: Cloud API url (auth)
-    #:
-    #: ie: https://controler:5000/v3/auth/tokens
-    #: 
-    #: (required for: Openstack)
-    cloud_url = Unicode(
-        "https://noocloud.univ-brest.fr/keystone/v3/auth/tokens",
-        config=True
-    )
-    #: Cloud username to manage nodes
-    #:
-    #: (required for: Openstack)
-    cloud_user = Unicode(
-        config=True
-    )
-    #: Cloud password to manage nodes
-    #:
-    #: (required for: Openstack)
-    cloud_userpassword = Unicode(
-        config=True
-    )
-    #: Cloud tenant or project name where spawns notebook nodes
-    #:
-    #: (required for: Openstack)
-    cloud_project = Unicode(
-        config=True
-    )
-    #: Module where libcloudspawner can find a jinja2 template folder for
-    #: userdata script which pass to cloud-init
+    #: Module where libcloudspawner can find a jinja2 template folder for :
+    #: cloud-init script for machine instanciation 
+    #: template for JupyterHub server UI (eg. options_form)
     userdata_template_module = Unicode(
         'libcloudspawner',
         config=True
     )
-    #: Template name for cloud-init userdata script
+    #: Template name for cloud-init userdata script (instance customisation)
     userdata_template_name = Unicode(
         'userdata.sh.j2',
         config=True
     )
-    #: List of tuple for nodes flavors like
+    #: List of tuple for machine instance flavors, final user will be able to choose (options_form)
     #:
     #: >>>  [('Simple machine', 's0-small'),
     #: >>>   ('Mouhahaha machine','h4-bigmem')]
@@ -76,13 +49,6 @@ class LibcloudSpawner(Spawner):
     machine_sizes = List(
         [],
         config=True,
-    )
-    #: Region where deploy nodes
-    #:
-    #: (required for Openstack)
-    cloud_region = Unicode(
-        'RegionOne',
-        config=True
     )
     #: List of tuple for nodes images (templates)
     #:
@@ -94,54 +60,48 @@ class LibcloudSpawner(Spawner):
         [],
         config=True
     )
-    #: Network name where connect nodes
+    #: Network name where connect machine instance
     #:
     #: (required for Openstack)
     machine_net = Unicode(
         config=True
     )
-    #: Cloud node identifier
+    #: Instance Cloud node identifier (internal)
     machineid = Unicode(
         ""
     )
-    #: NOT IMPLEMENTED (force username on remote machine, instead of auth user)
+    #: Force unix username on machine (default is JupyterHub server authed user)
     #:
-    #: ..todo: Used of forceuser inside cloud-init template
+    #: Usefull if JupyterHub authenticated unix user doesn't existe on instance.
+    #: For instance, on a fresh Ubuntu cloud image, we can set 'ubuntu'.
+    #:
+    #: This user must exist on machine instance
     forceuser = Unicode(
         "",
         config=True
     )
-    #: Notebook args to pass on nodes
-    #: DEPRECATED - Use c.Spawner.args instead (to be removed in 1.4)
-    notebookargs = Unicode(
-        "",
-        config=True
-    )
     #: Libcloud Parameters, see managers documentations for details
+    libcloud_driver_params = Dict(
+        {},
+        config=True,
+        help='LibCloud Driver params'
+    )
+    #: DEPRECATED Libcloud Parameters, see managers documentations for details
     libcloudparams = Dict(
         {},
         config=True,
         help='LibCloud cloud Configuration'
     )
-    #: To retrieve some metrics (like spawn time...) via statsd
-    #: Statsd dict params host, port and prefix. See StatsClient for more options
-    statsdparams = Dict(
-        {},
-        config=True
-        )
 
     spawner_events = []
 
     def __init__(self, **kwargs):
         super(LibcloudSpawner, self).__init__(**kwargs)
 
-        # Trying to bind to statsd
-        self.statsd = None
-        if self.statsdparams:
-            try:
-                self.statsd = StatsClient(**self.statsdparams)
-            except:
-                self.log.info('Failed to connect to statsd daemon')
+        # Compatibility / use libcloudparams as libcloud_drivers_params
+        if not self.libcloud_driver_params and self.libcloudparams:
+           self.log.warning('DEPRECATION WARNING c.LibcloudSpawner.libcloudparams will be remove in 1.5') 
+           self.libcloud_driver_params = self.libcloudparams
 
         self.nodemanager = NodeManager(self,
                                        logguer=self.log)
@@ -271,7 +231,7 @@ class LibcloudSpawner(Spawner):
             if ("JUPYTER" in key) or ("JPY" in key):
                 jhub_env[key]=value
 
-        # Retrieve args to provide to Jupyter
+        # Retrieve user args to provide to Jupyter (from option form)
         notebook_args = self.get_args()
 
         # Server port
