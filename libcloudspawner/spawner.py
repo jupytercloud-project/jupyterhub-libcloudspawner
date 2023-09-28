@@ -66,6 +66,16 @@ class LibcloudSpawner(Spawner):
     machine_net = Unicode(
         config=True
     )
+
+    #: SSH Keyname 
+    #:
+    #: ssh key to insert in instance at cloudinit step
+    keyname = Unicode(
+        False,
+        config=True
+    )
+
+
     #: Instance Cloud node identifier (internal)
     machineid = Unicode(
         ""

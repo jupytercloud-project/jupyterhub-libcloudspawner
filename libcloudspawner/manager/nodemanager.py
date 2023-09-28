@@ -283,6 +283,8 @@ class NodeManager(object):
         netname = self.spawner_conf.machine_net
         node_conf['networks'] = [self._get_network(netname)]
 
+        if self.spawner_conf.keyname:
+                node_conf['ex_keyname'] = self.spawner_conf.keyname
 
         # Generate nodename
         node_conf['name'] = self._generate_machine_name(
