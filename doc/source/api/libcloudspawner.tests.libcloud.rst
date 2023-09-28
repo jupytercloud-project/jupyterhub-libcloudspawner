@@ -1,22 +1,21 @@
-libcloudspawner\.tests\.libcloud package
-========================================
+libcloudspawner.tests.libcloud package
+======================================
 
 Submodules
 ----------
 
-libcloudspawner\.tests\.libcloud\.vapor module
-----------------------------------------------
+libcloudspawner.tests.libcloud.vapor module
+-------------------------------------------
 
 .. automodule:: libcloudspawner.tests.libcloud.vapor
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------
 
 .. automodule:: libcloudspawner.tests.libcloud
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -12,3 +12,5 @@ libcloudspawner.egg-info
 doc/build
 build/
 dist/
+jupyterhub-proxy.pid
+workspace.code-workspace
