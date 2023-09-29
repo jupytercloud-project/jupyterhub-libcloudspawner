@@ -96,22 +96,11 @@ class LibcloudSpawner(Spawner):
         config=True,
         help='LibCloud Driver params'
     )
-    #: DEPRECATED Libcloud Parameters, see managers documentations for details
-    libcloudparams = Dict(
-        {},
-        config=True,
-        help='LibCloud cloud Configuration'
-    )
 
     spawner_events = []
 
     def __init__(self, **kwargs):
         super(LibcloudSpawner, self).__init__(**kwargs)
-
-        # Compatibility / use libcloudparams as libcloud_drivers_params
-        if not self.libcloud_driver_params and self.libcloudparams:
-           self.log.warning('DEPRECATION WARNING c.LibcloudSpawner.libcloudparams will be remove in 1.5') 
-           self.libcloud_driver_params = self.libcloudparams
 
         self.nodemanager = NodeManager(self,
                                        logguer=self.log)
@@ -220,18 +209,21 @@ class LibcloudSpawner(Spawner):
         * node creation
         * jhub port recheable
         """
-        log_index = 0
+        self.log.debug('progress called')
+        event_index = 0
         while True:
-            events = self.nodemanager.node_events
-            
-            if log_index < (len(events) - 1):
-                log_index += 1
-                yield events[log_index]
-                
+            #events = self.nodemanager.node_events
+            #if event_index < (len(events)):
+            #    current_event = events[event_index]
+            #    event_index += 1
+            #    print(self.nodemanager.node_events)
+            #    self.log.debug(f'progress {event_index}')
+            current_event={"progress": 42, "message": "Hello world!", "ready": False}
+            yield current_event
             await asyncio.sleep(1)
 
-    @gen.coroutine
-    def start(self):
+    #@gen.coroutine
+    async def start(self):
         """
             Start notebook node and poll machine until timeout
         """
@@ -253,40 +245,39 @@ class LibcloudSpawner(Spawner):
             server_port = self.port
 
         # Node creation
-        self.nodemanager.create_machine(jhub_env,
+        await self.nodemanager.create_machine(jhub_env,
                                         notebook_args,
                                         self.user_options_from_form,
                                         server_port)
-
+        startup_poll_interval = 1.
+        timeoutloop = int(self.start_timeout / startup_poll_interval)
         for i in range(self.start_timeout):
-            status = yield self.poll()
+            status = await self.poll()
             if status is None:
                 # Notebook ready
                 self.user.server.ip = self.nodemanager.node_ip
                 self.user.server.port = self.nodemanager.node_port
                 self.machineid = self.nodemanager.node.id
-                self.log.info("Yippee notebook ready at %s:%s (%s)" % 
+                self.log.info("Jupyter singleuser-server responding at %s:%s (%s)" % 
                               (self.user.server.ip,
                                self.user.server.port,
                                self.machineid))
                 self.db.commit()
-                return(self.user.server.ip, self.user.server.port)
-            else:
-                yield gen.sleep(1)
+                return(self.user.server.ip,
+                       self.user.server.port)
+            await gen.sleep(startup_poll_interval)
         # Timeout start failed...
         self.log.debug("Spawn Timeout, deleting Cloud instance %s ")
         self.nodemanager.destroy_node()
-        return None
 
-    @gen.coroutine
-    def poll(self):
+    async def poll(self):
         """
-            Poll the process
+            Poll the node and singleserver status
         """
-        return self.nodemanager.get_node_status()
+        status = await self.nodemanager.get_node_status()
+        return status
 
-    @gen.coroutine
-    def stop(self):
+    async def stop(self):
         self.log.debug("DELETE Cloud instance %s " % self.machineid)
-        self.nodemanager.destroy_node()
+        await self.nodemanager.destroy_node()
         return
