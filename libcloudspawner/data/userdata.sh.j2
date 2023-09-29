@@ -6,6 +6,21 @@
 # systemd
 #
 
+# if user not exist, create it
+id {{ user }}
+if [ "$?" -ne 0 ]
+then
+    useradd -d /home/{{ user }} -m -s /bin/bash -c "Jupyter User {{ user }}" {{ user }}
+fi
+
+
+# jupyterhub-singleuser server config
+mkdir -p /etc/jupyter
+cat <<EOF > /etc/jupyter/jupyter_notebook_config.py
+c.NotebookApp.notebook_dir = '/'
+c.NotebookApp.default_url = "/lab/tree/home/{{ user }}"
+EOF
+
 # Create systemd service
 #
 cat <<EOF> /etc/default/jupyter
