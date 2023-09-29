@@ -8,27 +8,21 @@ c.JupyterHub.port = 8000
 c.JupyterHub.proxy_api_ip = '0.0.0.0'
 c.JupyterHub.spawner_class = 'libcloudspawner.spawner.libcloudSpawner'
 c.JupyterHub.hub_ip = '0.0.0.0'
-c.JupyterHub.proxy_auth_token = '8864d13d72822339c3cbe2347eba6be9f97bb430e1c85bb18280bc7baec77dcd'
-c.JupyterHub.cookie_secret = bytes.fromhex('8864d13d72822339c3cbe2347eba6be9f97bb430e1c85bb18280bc7baec7aaaaadcd')
-c.Spawner.start_timeout = 90
-c.Spawner.http_timeout = 60
-c.Spawner.debug = False
-c.Spawner.notebook_dir = '~/'
+
+
 c.Spawner.args = ['']
-c.LibcloudSpawner.cloud_url = "https://KEYSTONE_API:5000/v3/auth/tokens"
-c.LibcloudSpawner.cloud_user = "jupyter"
-c.LibcloudSpawner.cloud_userpassword = "secret"
-c.LibcloudSpawner.cloud_project = "jupyterproject"
-c.LibcloudSpawner.machine_sizes = [("1vcpu 2Go RAM", "m1.small"),
-                                   ("4vcpu 8Go RAM", "m1.large")]
-c.LibcloudSpawner.machine_images = [("Default image", "jpysingleuser-general-applayer")]
-c.LibcloudSpawner.machine_net = "my-tenant-network"
-c.LibcloudSpawner.userdata_template_name = "example_userdata_from_vanilla_cloudimage.yaml.j2"
-c.LibcloudSpawner.libcloudparams = {"arg_user_id": "jupyter",
-                                    "arg_key": "secret",
+
+c.LibcloudSpawner.userserver_sizes = [("Small (2 core, 4Gb)", "noocompute.2c.4g"), ("Medium (4 core, 8Gb)", "noocompute.4c.8g")]
+c.LibcloudSpawner.userserver_images = [("Ubuntu vanilla 22.04", "ubuntu-jupyterhub-2.3.0") ]
+c.LibcloudSpawner.userserver_net = "cloud-ext"
+#c.LibcloudSpawner.userserver_keyname = "sysadmin"
+
+c.LibcloudSpawner.userdata_template_name = "userdata.sh.j2"
+c.LibcloudSpawner.libcloud_driver_params = {"arg_user_id": "cloud-user-name",
+                                    "arg_key": "password",
                                     "ex_force_auth_version": "3.x_password",
-                                    "ex_force_auth_url": "https://KEYSTONE_API:5000/v3/auth/tokens",
-                                    "ex_force_service_region": "RegionOne",
-                                    "ex_tenant_name": "jupyterproject",
-                                    "ex_domain_name": "default",
-                                    "ex_keyname": "tristanlt"}
+                                    "ex_force_auth_url": "https://keystone.cloud.fdqn:5000",
+                                    "ex_force_service_region": "universe",
+                                    "ex_tenant_name": "my-cloud-project",
+                                    "ex_domain_name": "Default",
+                                    "verify_ssl_cert": True}
