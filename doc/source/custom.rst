@@ -3,14 +3,14 @@ Customize libcloudSpawner
 
 Here is some information about tuning and tweaking libcloudspawner. 
 
-The best way (in terms of spawn time) is to customize instances images used by JupyterHub. But some operations must be executed at instantiation time by a userdata script. 
+The best way (in terms of spawn time) is to customize instances images used by JupyterHub. But some operations must be executed at instantiation time by a cloud-init userdata script.
 
 Note that you can use generic vendors cloud images but JupyterHub requirements should be installed at the start of the instance. For end users, startup should take some time (depending on your cloud provider).  
 
 Provide a custom userdata script
 --------------------------------
 
-Userdata scripts configure instance at first startup to customize and launch notebooks.
+Userdata scripts configure instance at first startup to customize and launch Jupyterhub singleuser service.
 
 LibcloudSpawner searches for a Jinja2 template of userdata script inside a Python module.
 

@@ -1,7 +1,7 @@
 About LibCloudSpawner
 =====================
 
-LibcloudSpawner is a JupyterHub Spawner that allows JupyterHub to launch cloud instance inside a private or public cloud. Each Jupyterhub user have a fresh cloud instance for his usage.
+LibcloudSpawner is a JupyterHub Spawner that allow to launch singleuser-server on cloud instance. Each Jupyterhub user have a fresh cloud instance for his usage.
 
 *This middleware is fully Kubernetes free.*
 
@@ -17,17 +17,14 @@ Supported cloud provider (PR are open) :
 
 Benefits :
 * just need an instance for JupyterHub server, users ressources are dynamic
-* single-user servers are full system, feel free to integrate them in your network (LDAP/YP auth, NFS, CephFS... )
-* direct access to VT-io devices (GPU)
+* single-user servers are full system, feel free to integrate them in your network (authentication, mountpoint, CephFS... )
+* direct access to VT-io or pci-passthrough devices (GPU)
 * run others services beside user JupyterHub single-server (VNC, RStudio...)
 * no need Kubernetes nor Docker (but you can use it)
 
 Drawbacks :
 * user server could be very slow to start (depending cloud provider)
 * no need Kubernetes nor Docker
-
-
-
 
 .. image:: _static/general-usage.png
    :width: 600px
