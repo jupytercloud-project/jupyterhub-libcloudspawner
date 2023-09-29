@@ -32,7 +32,7 @@ class NodeManager(object):
     """
 
     def __init__(self, spawner_conf, logguer):
-
+        
         self.logguer = logguer
         self.spawner_conf = spawner_conf
 
@@ -66,16 +66,16 @@ class NodeManager(object):
         if not 'arg_user_id' in self.spawner_conf.libcloud_driver_params.keys():
             raise MissingConfigError("libcloud_driver_params[\'arg_user_id\']")
 
-        if len(self.spawner_conf.machine_images) < 1:
-            raise MissingConfigError("machine_images")
+        if len(self.spawner_conf.userserver_images) < 1:
+            raise MissingConfigError("userserver_images")
 
-        if len(self.spawner_conf.machine_sizes) < 1:
-            raise MissingConfigError("machine_sizes")
+        if len(self.spawner_conf.userserver_sizes) < 1:
+            raise MissingConfigError("userserver_sizes")
 
     def _get_provider(self):
         return get_driver(Provider.OPENSTACK)
 
-    def _generate_machine_name(self, username):
+    def _generate_node_name(self, username):
         """ Generate random name for node
             Machine name contain username
         """
@@ -193,7 +193,7 @@ class NodeManager(object):
         self.node_ip = None
         self.node_port = None
 
-    def get_node_status(self):
+    async def get_node_status(self):
         """
         Check that node and notebook are OK 
         @return None if ok, 1 else
@@ -223,11 +223,10 @@ class NodeManager(object):
                     return 1
         return 1
 
-    def create_machine(self, jhub_env, notebookargs, user_options_from_form, port):
+    async def create_node(self, jhub_env, notebookargs, user_options_from_form, port):
         """
             Create a machine, return nothing
         """
-        self.logguer.debug("create_machine start")
 
         # Able to force unix user to 
         if self.spawner_conf.forceuser:
@@ -272,31 +271,28 @@ class NodeManager(object):
         node_conf = {}
 
         # Search image
-        imagename = self.spawner_conf.user_options['machineimage']
+        imagename = self.spawner_conf.user_options['userserver_image']
         node_conf['image'] = self._get_image(imagename)
 
         # Search size /flavor
-        sizename = self.spawner_conf.user_options['machinesize']
+        sizename = self.spawner_conf.user_options['userserver_size']
         node_conf['size'] = self._get_size(sizename)
 
         # Search network
-        netname = self.spawner_conf.machine_net
+        netname = self.spawner_conf.userserver_net
         node_conf['networks'] = [self._get_network(netname)]
 
-        if self.spawner_conf.keyname:
-                node_conf['ex_keyname'] = self.spawner_conf.keyname
+        if self.spawner_conf.userserver_keyname:
+                node_conf['ex_keyname'] = self.spawner_conf.userserver_keyname
 
         # Generate nodename
-        node_conf['name'] = self._generate_machine_name(
+        node_conf['name'] = self._generate_node_name(
                                     self.spawner_conf.user.name)
 
         node_conf['ex_userdata'] = userdata
 
-        if "ex_keyname" in self.spawner_conf.libcloudparams.keys():
-            node_conf['ex_keyname'] = self.spawner_conf.libcloudparams['ex_keyname']
-
-        # Create machine
+        # Create node
         self.node_events.append( { "progress": 40,
                                    "message": "Cloud node building" })
         self.node = self.driver.create_node(**node_conf)
-        self.logguer.debug("create_machine stop")
+        self.logguer.debug("create_node stop")
