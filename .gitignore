@@ -16,3 +16,4 @@ jupyterhub-proxy.pid
 workspace.code-workspace
 .eggs
 .vscode/settings.json
+doc/source/_build/
