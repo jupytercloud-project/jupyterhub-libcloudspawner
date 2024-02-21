@@ -1,0 +1,42 @@
+markdown_extensions:
+- attr_list
+- admonition
+- pymdownx.details
+- pymdownx.superfences
+- pymdownx.tabbed:
+      alternate_style: true
+- toc:
+    permalink: true
+- pymdownx.superfences
+nav:
+- Overview: index.md
+- prepare-cloud.md
+- install.md
+- configure.md
+- Customize:
+  - custom/index.md
+- Use Cases:
+  - use-cases/ubuntu-local.md
+  - use-cases/ubuntu-local-vnc.md
+  - use-cases/simplevm-apptainer.md
+- internal.md
+- Support: SUPPORT.md
+- Releases ⧉: https://github.com/tristanlt/jupyter-libcloudspawner/releases
+repo_url: https://github.com/tristanlt/jupyter-libcloudspawner
+site_name: "JupyterHub libcloudSpawner Documentation"
+strict: false
+theme:
+  name: material
+  palette:
+  - media: '(prefers-color-scheme: light)'
+    primary: teal
+    scheme: default
+    toggle:
+      icon: material/brightness-7
+      name: Switch to dark mode
+  - media: '(prefers-color-scheme: dark)'
+    primary: teal
+    scheme: slate
+    toggle:
+      icon: material/brightness-4
+      name: Switch to light mode
