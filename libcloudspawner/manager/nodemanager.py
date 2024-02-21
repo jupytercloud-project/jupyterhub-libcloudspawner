@@ -32,7 +32,9 @@ class NodeManager(object):
     """
 
     def __init__(self, spawner_conf, logguer):
-        
+
+        self.spawner_state_event = {"message": "Spawner initialized"}
+
         self.logguer = logguer
         self.spawner_conf = spawner_conf
 
@@ -55,8 +57,6 @@ class NodeManager(object):
         self.node = None
         self.node_ip = None
         self.node_port = None
-
-        self.node_events = []
 
     def _check_config(self):
         """
@@ -92,8 +92,7 @@ class NodeManager(object):
         for i in images:
             if i.name == imagename:
                 self.logguer.debug("Image found %s" % i.name)
-                self.node_events.append( { "progress": 5,
-                                           "message": "Cloud image found (%s)" % i.name })
+                self.spawner_state_event = {"message": "Cloud image found (%s)" % i.name, "progress": 1 }
                 return i
         # Image not found, raising an error
         raise ImageNotFoundError
@@ -107,8 +106,7 @@ class NodeManager(object):
             self.logguer.debug(n.name)
             if n.name == netname:
                 self.logguer.debug("Network found %s" % n.name)
-                self.node_events.append( { "progress": 15,
-                                           "message": "Cloud network found (%s)" % n.name })
+                self.spawner_state_event = {"message": "Cloud network found (%s)" % n.name, "progress": 5 }
                 return n
         # Network not found, raising an error
         raise NetworkNotFoundError
@@ -121,8 +119,7 @@ class NodeManager(object):
         for s in sizes:
             if s.name == sizename:
                 self.logguer.debug("Size found %s" % s.name)
-                self.node_events.append( { "progress": 10,
-                                           "message": "Cloud flavor found (%s)" % s.name })
+                self.spawner_state_event = {"message": "Cloud flavor found (%s)" % s.name, "progress": 10 }
                 return s
 
         # Size not found, raising an error 
@@ -201,12 +198,7 @@ class NodeManager(object):
         node = self.get_node()
         if node:
             if node.state == 'running':
-                
-                # Add an event to node_events (one time)
-                running_event = { "progress": 70,
-                                  "message": "Cloud node running" }
-                if not running_event in self.node_events:
-                    self.node_events.append(running_event)
+                self.spawner_state_event = {"message": "User server running", "progress": 50 }
 
                 # Node Ok, updating network informations
                 self._update_node_net_informations()
@@ -216,8 +208,7 @@ class NodeManager(object):
 
                 # Notebook ? Did you respond ?
                 if self._check_notebook_service():
-                    self.node_events.append( { "progress": 100,
-                                               "message": "JupyterHub single-user service running" })
+                    self.spawner_state_event = {"message": "JupyterHub single-user service running", "progress": 100, "ready": True }
                     return None
                 else:
                     return 1
@@ -292,7 +283,6 @@ class NodeManager(object):
         node_conf['ex_userdata'] = userdata
 
         # Create node
-        self.node_events.append( { "progress": 40,
-                                   "message": "Cloud node building" })
+        self.spawner_state_event = {"message": "Cloud node building", "progress": 30 }
         self.node = self.driver.create_node(**node_conf)
         self.logguer.debug("create_node stop")
