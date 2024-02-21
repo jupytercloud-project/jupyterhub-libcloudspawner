@@ -10,8 +10,8 @@ build:
   tools:
     python: "3.12"
 
-sphinx:
-  configuration: doc/source/conf.py
+mkdocs:
+  configuration: mkdocs.yml
 
 python:
   install:

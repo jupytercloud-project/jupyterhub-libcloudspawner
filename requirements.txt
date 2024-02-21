@@ -1,5 +1,3 @@
-apache-libcloud
-Jinja2
-jupyterhub
-jupyter
-configurable-http-proxy
+mkdocs==1.5.3
+mkdocs-material==9.5.4
+mkdocs-material-extensions==1.3.1
