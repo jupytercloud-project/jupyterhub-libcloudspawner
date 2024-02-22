@@ -1,9 +1,8 @@
 AUTHORS
 ChangeLog
-doc
+docs
 libcloudspawner
 LICENSE
-README.rst
+README.md
 requirements.txt
-setup.cfg
-setup.py
+pyproject.toml
