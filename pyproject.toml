@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "libcloudspawner"
-version = "2.0.1"
+dynamic = ["version"]
 authors = [
   { name="Tristan Le Toullec", email="tristan.letoullec@cnrs.fr" },
 ]
@@ -24,3 +24,5 @@ classifiers = [
 "Documentation" = "https://jupyter-libcloudspawner.readthedocs.io/en/latest/about.html"
 "Bug Tracker" = "https://github.com/tristanlt/jupyter-libcloudspawner/issues"
 
+[tool.hatch.version]
+path = "libcloudspawner/__about__.py"
