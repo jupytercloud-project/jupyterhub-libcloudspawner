@@ -17,3 +17,4 @@ workspace.code-workspace
 .eggs
 .vscode/settings.json
 doc/source/_build/
+SECRET.md
