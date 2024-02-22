@@ -25,11 +25,10 @@ dependencies = [
     "apache-libcloud"
 ]
 
-
 [project.urls]
-"Homepage" = "https://github.com/tristanlt/jupyter-libcloudspawner"
-"Documentation" = "https://jupyter-libcloudspawner.readthedocs.io/en/latest/"
-"Bug Tracker" = "https://github.com/tristanlt/jupyter-libcloudspawner/issues"
+"Homepage" = "https://github.com/jupytercloud-project/jupyterhub-libcloudspawner"
+"Documentation" = "https://libcloudspawner.readthedocs.io/en/latest/"
+"Bug Tracker" = "https://github.com/jupytercloud-project/jupyterhub-libcloudspawner/issues"
 
 [tool.hatch.version]
 path = "libcloudspawner/__about__.py"

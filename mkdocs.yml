@@ -21,8 +21,8 @@ nav:
   - use-cases/simplevm-apptainer.md
 - internal.md
 - Support: SUPPORT.md
-- Releases ⧉: https://github.com/tristanlt/jupyter-libcloudspawner/releases
-repo_url: https://github.com/tristanlt/jupyter-libcloudspawner
+- Releases ⧉: https://github.com/jupytercloud-project/jupyterhub-libcloudspawner/releases
+repo_url: https://github.com/jupytercloud-project/jupyterhub-libcloudspawner
 site_name: "JupyterHub libcloudSpawner Documentation"
 strict: false
 theme:

@@ -12,11 +12,9 @@ This documentation assumes you have already some knowledge about Jupyter and Jup
 
 ## Installation
 
-On your Jupyterhub instance, install dependencies and **jupyter-libcloudspawner** from Pypi.
+On your Jupyterhub instance, install dependencies and **libcloudspawner** from Pypi.
 
 ```
 pip install jupyterhub
-pip install apache-libcloud
-pip install Jinja2
-pip install jupyter-libcloudspawner
+pip install libcloudspawner
 ```
