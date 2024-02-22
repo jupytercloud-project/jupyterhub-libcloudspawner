@@ -4,11 +4,7 @@
 
 LibcloudSpawner enables JupyterHub to spwan single-user notebooks server inside fresh cloud instance.
 
-LibcloudSpawner is based on [Apache Libcloud](https://libcloud.apache.org/) which aims to provide an abstraction API for a lot of cloud providers.
-
-!!! note "For the moment, only OpenStack is supported"
-
-    Apache Libcloud provides the ability to manage resources in AWS, Google Cloud or Azure. But for the moment, only OpenStack is supported.
+LibcloudSpawner is based on [Apache Libcloud](https://libcloud.apache.org/) which aims to provide an abstraction API for a lot of cloud providers. Apache Libcloud provides the ability to manage resources in AWS, Google Cloud or Azure. **But for the moment, only OpenStack is supported**.
 
 ## Overview
 
