@@ -1,0 +1,79 @@
+# Nothing has ever checked this repository. The only workflow here is
+# python-publish.yml, which releases; it does not run on a pull request and
+# proves nothing about one.
+#
+# There are no tests in the tree, so this lane does not pretend to run any.
+# What it does prove is the thing that was actually broken: the package
+# installed and then could not be imported, because spawner.py imported
+# async_generator and pyproject.toml never declared it. A dependency bump is
+# exactly the change that breaks an import, and nothing here would have caught
+# it.
+
+name: ci
+
+# No `branches:` filter on pull_request: a filtered trigger reports "no checks"
+# forever for any pull request not aimed at the default branch.
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    name: python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+
+      # 1. PROVES: the declared dependencies resolve and the package installs.
+      #    DOES NOT PROVE: that they are the RIGHT dependencies -- step 2 is
+      #    what checks that, and it is the one that was failing.
+      - name: pip install
+        run: pip install -e .
+
+      # 2. PROVES: every module imports with only the declared dependencies
+      #    present. This is the check that would have caught the missing
+      #    async_generator declaration: `pip install` succeeded, `import
+      #    libcloudspawner.spawner` raised ModuleNotFoundError.
+      - name: import
+        run: python -c "import libcloudspawner, libcloudspawner.spawner"
+
+      # 3. PROVES: LibcloudSpawner.progress is a real async generator, which is
+      #    the contract JupyterHub calls it under. Written as a behaviour check
+      #    rather than a grep because the shape is what matters: it was
+      #    previously an async_generator-decorated coroutine, and swapping that
+      #    for a plain `async def` without `yield` would still import cleanly
+      #    while silently no longer being a generator.
+      - name: progress is an async generator
+        run: |
+          python - <<'PY'
+          import inspect, sys
+          from libcloudspawner.spawner import LibcloudSpawner
+          if not inspect.isasyncgenfunction(LibcloudSpawner.progress):
+              print("::error::LibcloudSpawner.progress is not an async generator")
+              sys.exit(1)
+          print("ok: progress is an async generator")
+          PY
+
+      # 4. PROVES: the sdist and wheel build, which is what python-publish.yml
+      #    does on a tag -- so a packaging break is found here rather than at
+      #    release time.
+      - name: build sdist and wheel
+        run: |
+          pip install build
+          python -m build

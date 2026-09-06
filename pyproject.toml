@@ -22,7 +22,10 @@ classifiers = [
 dependencies = [
     "jinja2",
     "jupyterhub>=4.0.0",
-    "apache-libcloud"
+    "apache-libcloud",
+    "requests",
+    "tornado",
+    "traitlets"
 ]
 
 [project.urls]
