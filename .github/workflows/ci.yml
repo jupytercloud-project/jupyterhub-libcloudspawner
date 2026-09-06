@@ -77,3 +77,33 @@ jobs:
         run: |
           pip install build
           python -m build
+
+  # The install job says nothing about docs/, and that gap has already cost
+  # something: mkdocs-material was raised to 9.7.7 while mkdocs stayed at
+  # 1.5.3, which makes docs/requirements.txt UNRESOLVABLE --
+  # `pip install -r docs/requirements.txt` fails with ResolutionImpossible,
+  # because 9.7.7 needs mkdocs >= 1.6. Both halves are a pair; neither can
+  # land alone. Nothing noticed, because nothing looked.
+  docs:
+    name: docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      # 1. PROVES: the pinned docs dependencies can actually be installed
+      #    together. This is the check that catches half of a pinned pair
+      #    moving on its own.
+      - name: pip install -r docs/requirements.txt
+        run: pip install -r docs/requirements.txt
+
+      # 2. PROVES: the site builds with those versions.
+      #    NOT --strict, deliberately: strict mode currently fails on a
+      #    pre-existing nav warning (SUPPORT.md is referenced in mkdocs.yml
+      #    and absent from the tree), which has nothing to do with any
+      #    dependency. A step that is red on arrival is one people learn to
+      #    ignore. Fix that warning and --strict becomes the better check.
+      - name: mkdocs build
+        run: mkdocs build
